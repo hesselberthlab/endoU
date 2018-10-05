@@ -1,0 +1,42 @@
+#config for endoU analysis pipeline # 
+
+#directory for data
+#DATA:
+ #"~/data/23cp-seq/2017-08-25/fastq"
+
+#directories for alignments 
+VIRAL_IDX:
+ "~/data-sets/genome/virus/mhv.mod"
+
+U6_IDX:
+ "~/data-sets/genome/mm9/U6/U6"
+
+MRNA_IDX:
+ "~/data-sets/genome/mm10/mRNA/ref_mRNA"
+
+TRNA_IDX:
+ "~/data-sets/genome/mm10/tRNAs/mm10-tRNAs"
+
+R18S_IDX:
+ "~/data-sets/genome/mm10/rRNA/mm18S"
+
+R28S_IDX:
+ "~/data-sets/genome/mm10/rRNA/mm28S"
+
+R5S_IDX:
+ "~/data-sets/genome/mm10/rRNA/mm5S"
+
+R58S_IDX:
+ "~/data-sets/genome/mm10/rRNA/mm5.8s"
+
+CHROM_SIZES:
+ "~/data-sets/genome/mm10/all_RNAs/combined.sizes.genome"
+
+
+
+
+
+
+
+
+

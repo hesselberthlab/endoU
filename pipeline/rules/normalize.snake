@@ -1,0 +1,68 @@
+'''rules to make normalized bedgraphs'''
+
+import os
+import glob
+
+rule normalize:
+  input:
+     "results/bedgraph/{sample}.{bam_name}.bg"
+  output:
+     "results/normalized_bg/{sample}.{bam_name}.normalized.bg"
+  params:
+    job_name = "normalize",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "normalized_bg/log/{sample}.txt"
+  threads:12
+
+  shell:
+    """
+    awk \
+        -v total={READS} \
+        '{{print$0"\t"($4/total)*100}}' {input} \
+        > {output}
+    """
+
+rule mhv_normalize_pos:
+  input:
+     "results/bedgraph/mhv_pos/{sample}.mhv.pos.bg"
+  output:
+     "results/normalized_bg/mhv/{sample}.mhv.pos.normalized.bg"
+  params:
+    job_name = "normalize",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "normalized_bg/mv/log/{sample}.txt"
+  threads:12
+
+  shell:
+    """
+    awk \
+        -v total={READS} \
+        '{{print$0"\t"($4/total)*100}}' {input} \
+        > {output}
+    """
+
+rule mhv_normalize_neg:
+  input:
+     "results/bedgraph/mhv_neg/{sample}.mhv.neg.bg"
+  output:
+     "results/normalized_bg/mhv/{sample}.mhv.neg.normalized.bg"
+  params:
+    job_name = "normalize",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "normalized_bg/mv/log/{sample}.txt"
+  threads:12
+
+  shell:
+    """
+    awk \
+        -v total={READS} \
+        '{{print$0"\t"($4/total)*100}}' {input} \
+        > {output}
+    """
+
+
+
+

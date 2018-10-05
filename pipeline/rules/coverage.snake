@@ -1,0 +1,115 @@
+''' rules to make bedgraphs from bam files of 23cp data '''
+
+import os
+import glob
+
+rule dedup:
+  input:
+     "results/bam/{sample}.{bam_name}.bam"
+  output:
+     "results/dedup_bam/{sample}.{bam_name}.dedup.bam"
+  params:
+    job_name = "dedup.bowtie",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "dedup_bam/log/{sample}_dedup.txt"
+  threads:12
+  
+  shell:
+    """
+    umi_tools dedup \
+        -I {input} \
+        -S {output} 
+    """
+
+rule sort:
+  input:
+     "results/dedup_bam/{sample}.{bam_name}.dedup.bam"
+  output:
+     "results/sorted_dedup_bam/{sample}.{bam_name}.sorted.bam"
+  params:
+    job_name = "sort",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "sorted_dedup_bam/log/{sample}_sort.txt"
+  threads:12
+  
+  shell:
+    """
+    samtools sort \
+        {input} > {output} 
+    """
+
+rule coverage:
+  input:
+     "results/sorted_dedup_bam/{sample}.{bam_name}.sorted.bam"
+  output:
+     "results/bedgraph/{sample}.{bam_name}.bg"
+  params:
+    job_name = "coverage",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "bedgraph/log/{sample}.txt"
+  threads:12
+  
+  shell:
+    """
+    bedtools genomecov \
+        -5 \
+        -bg \
+        -g \
+        -{CHROM_SIZES} \
+        -ibam {input} \
+        > {output}
+    """
+
+rule mhv_coverage_pos:
+  input:
+     "results/sorted_dedup_bam/{sample}.mhv.sorted.bam"
+  output:
+     "results/bedgraph/mhv_pos/{sample}.mhv.pos.bg"
+  params:
+    job_name = "coverage",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "bedgraph/mhv/log/{sample}.txt"
+  threads:12
+  
+  shell:
+    """
+    bedtools genomecov \
+        -5 \
+        -bg \
+        -g \
+        -{CHROM_SIZES} \
+        -ibam {input} \
+        -strand "+" \
+        > {output}
+    """
+
+rule mhv_coverage_neg:
+  input:
+     "results/sorted_dedup_bam/{sample}.mhv.sorted.bam"
+  output:
+     "results/bedgraph/mhv_neg/{sample}.mhv.neg.bg"
+  params:
+    job_name = "coverage",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "bedgraph/mhv/log/{sample}.txt"
+  threads:12
+  
+  shell:
+    """
+    bedtools genomecov \
+        -5 \
+        -bg \
+        -g \
+        -{CHROM_SIZES} \
+        -ibam {input} \
+        -strand "-" \
+        > {output}
+    """
+
+
+
