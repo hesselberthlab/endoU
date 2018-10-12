@@ -5,61 +5,64 @@ import glob
 
 rule normalize:
   input:
-     "results/bedgraph/{sample}.{bam_name}.bg"
+     nocount = "results/bedgraph/{bam_name}/{sample}.{bam_name}.bg",
+     count = "results/sorted_dedup_bam/all/{sample}.all.sorted.bam"
   output:
-     "results/normalized_bg/{sample}.{bam_name}.normalized.bg"
+     "results/normalized_bg/{bam_name}/{sample}.{bam_name}.normalized.bg"
   params:
     job_name = "normalize",
     memory = "select[mem>30] rusage[mem=30]",
   log:
-    "normalized_bg/log/{sample}.txt"
+    "results/log/normalized_bg/{sample}.txt"
   threads:12
 
   shell:
     """
     awk \
-        -v total={READS} \
-        '{{print$0"\t"($4/total)*100}}' {input} \
+        -v total=$(samtools view -c {input.count}) \
+        '{{print$0"\t"($4/total)*100}}' {input.nocount} \
         > {output}
     """
 
 rule mhv_normalize_pos:
   input:
-     "results/bedgraph/mhv_pos/{sample}.mhv.pos.bg"
+     nocount = "results/bedgraph/mhv_pos/{sample}.mhv.pos.bg",
+     count = "results/sorted_dedup_bam/all/{sample}.all.sorted.bam"
   output:
      "results/normalized_bg/mhv/{sample}.mhv.pos.normalized.bg"
   params:
     job_name = "normalize",
     memory = "select[mem>30] rusage[mem=30]",
   log:
-    "normalized_bg/mv/log/{sample}.txt"
+    "results/log/normalized_bg/mhv_pos/{sample}.txt"
   threads:12
 
   shell:
     """
     awk \
-        -v total={READS} \
-        '{{print$0"\t"($4/total)*100}}' {input} \
+        -v total=$(samtools view -c {input.count}) \
+        '{{print$0"\t"($4/total)*100}}' {input.nocount} \
         > {output}
     """
 
 rule mhv_normalize_neg:
   input:
-     "results/bedgraph/mhv_neg/{sample}.mhv.neg.bg"
+     nocount = "results/bedgraph/mhv_neg/{sample}.mhv.neg.bg",
+     count = "results/sorted_dedup_bam/all/{sample}.all.sorted.bam"
   output:
      "results/normalized_bg/mhv/{sample}.mhv.neg.normalized.bg"
   params:
     job_name = "normalize",
     memory = "select[mem>30] rusage[mem=30]",
   log:
-    "normalized_bg/mv/log/{sample}.txt"
+    "results/log/normalized_bg/mhv_neg/log/{sample}.txt"
   threads:12
 
   shell:
     """
     awk \
-        -v total={READS} \
-        '{{print$0"\t"($4/total)*100}}' {input} \
+        -v total=$(samtools view -c {input.count}) \
+        '{{print$0"\t"($4/total)*100}}' {input.nocount} \
         > {output}
     """
 
