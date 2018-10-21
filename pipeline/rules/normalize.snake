@@ -5,13 +5,13 @@ import glob
 
 rule normalize:
   input:
-     nocount = "results/bedgraph/{bam_name}/{sample}.{bam_name}.bg",
-     count = "results/sorted_dedup_bam/all/{sample}.all.sorted.bam"
+     nocount = "results/bedgraph/{sample}.bg",
+     count = "results/sorted_dedup_bam/{sample}.sorted.bam"
   output:
-     "results/normalized_bg/{bam_name}/{sample}.{bam_name}.normalized.bg"
+     "results/normalized_bg/{sample}.normalized.bg"
   params:
     job_name = "normalize",
-    memory = "select[mem>30] rusage[mem=30]",
+    memory = "select[mem>40] rusage[mem=40]",
   log:
     "results/log/normalized_bg/{sample}.txt"
   threads:12
@@ -19,17 +19,17 @@ rule normalize:
   shell:
     """
     awk \
-        -v total=$(samtools view -c {input.count}) \
+        -v total=$(samtools view -c -F4 {input.count}) \
         '{{print$0"\t"($4/total)*100}}' {input.nocount} \
         > {output}
     """
 
 rule mhv_normalize_pos:
   input:
-     nocount = "results/bedgraph/mhv_pos/{sample}.mhv.pos.bg",
-     count = "results/sorted_dedup_bam/all/{sample}.all.sorted.bam"
+     nocount = "results/mhv/bedgraph/{sample}.mhv.pos.bg",
+     count = "results/sorted_dedup_bam/{sample}.sorted.bam"
   output:
-     "results/normalized_bg/mhv/{sample}.mhv.pos.normalized.bg"
+     "results/mhv/normalized_bg/{sample}.mhv.pos.normalized.bg"
   params:
     job_name = "normalize",
     memory = "select[mem>30] rusage[mem=30]",
@@ -40,17 +40,17 @@ rule mhv_normalize_pos:
   shell:
     """
     awk \
-        -v total=$(samtools view -c {input.count}) \
+        -v total=$(samtools view -c -F4 {input.count}) \
         '{{print$0"\t"($4/total)*100}}' {input.nocount} \
         > {output}
     """
 
 rule mhv_normalize_neg:
   input:
-     nocount = "results/bedgraph/mhv_neg/{sample}.mhv.neg.bg",
-     count = "results/sorted_dedup_bam/all/{sample}.all.sorted.bam"
+     nocount = "results/mhv/bedgraph/{sample}.mhv.neg.bg",
+     count = "results/sorted_dedup_bam/{sample}.sorted.bam"
   output:
-     "results/normalized_bg/mhv/{sample}.mhv.neg.normalized.bg"
+     "results/mhv/normalized_bg/{sample}.mhv.neg.normalized.bg"
   params:
     job_name = "normalize",
     memory = "select[mem>30] rusage[mem=30]",
@@ -61,7 +61,7 @@ rule mhv_normalize_neg:
   shell:
     """
     awk \
-        -v total=$(samtools view -c {input.count}) \
+        -v total=$(samtools view -c -F4 {input.count}) \
         '{{print$0"\t"($4/total)*100}}' {input.nocount} \
         > {output}
     """

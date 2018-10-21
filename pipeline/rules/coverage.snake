@@ -5,9 +5,9 @@ import glob
  
 rule dedup:
   input:
-     "results/bam/{bam_name}/{sample}.{bam_name}.bam"
+     "results/bam/{sample}.bam"
   output:
-     "results/dedup_bam/{bam_name}/{sample}.{bam_name}.dedup.bam"
+     "results/dedup_bam/{sample}.dedup.bam",
   params:
     job_name = "dedup.bowtie",
     memory = "select[mem>30] rusage[mem=30]",
@@ -22,11 +22,48 @@ rule dedup:
         -S {output} 
     """
 
-rule sort:
+rule mhv_dedup:
   input:
-     "results/dedup_bam/{bam_name}/{sample}.{bam_name}.dedup.bam"
+     "results/mhv/bam/{sample}.mhv.bam"
   output:
-     "results/sorted_dedup_bam/{bam_name}/{sample}.{bam_name}.sorted.bam"
+     "results/mhv/dedup_bam/{sample}.mhv.dedup.bam",
+  params:
+    job_name = "dedup.bowtie",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "results/log/dedup_bam/mhv/{sample}_dedup.txt"
+  threads:12
+  
+  shell:
+    """
+    umi_tools dedup \
+        -I {input} \
+        -S {output} 
+    """
+
+rule all_sort:
+  input:
+     "results/dedup_bam/{sample}.dedup.bam"
+  output:
+     "results/sorted_dedup_bam/{sample}.sorted.bam",
+  params:
+    job_name = "sort",
+    memory = "select[mem>40] rusage[mem=40]",
+  log:
+    "results/log/sorted_dedup_bam/{sample}_sort.txt"
+  threads:12
+  
+  shell:
+    """
+    samtools sort \
+        {input} > {output} 
+    """
+
+rule mhv_sort:
+  input:
+     "results/mhv/dedup_bam/{sample}.mhv.dedup.bam"
+  output:
+     "results/mhv/sorted_dedup_bam/{sample}.mhv.sorted.bam",
   params:
     job_name = "sort",
     memory = "select[mem>30] rusage[mem=30]",
@@ -42,9 +79,9 @@ rule sort:
 
 rule coverage:
   input:
-     "results/sorted_dedup_bam/{bam_name}/{sample}.{bam_name}.sorted.bam"
+     "results/sorted_dedup_bam/{sample}.sorted.bam"
   output:
-     "results/bedgraph/{bam_name}/{sample}.{bam_name}.bg"
+     "results/bedgraph/{sample}.bg"
   params:
     job_name = "coverage",
     memory = "select[mem>30] rusage[mem=30]",
@@ -65,9 +102,9 @@ rule coverage:
 
 rule mhv_coverage_pos:
   input:
-     "results/sorted_dedup_bam/mhv/{sample}.mhv.sorted.bam"
+     "results/mhv/sorted_dedup_bam/{sample}.mhv.sorted.bam"
   output:
-     "results/bedgraph/mhv_pos/{sample}.mhv.pos.bg"
+     "results/mhv/bedgraph/{sample}.mhv.pos.bg"
   params:
     job_name = "coverage",
     memory = "select[mem>30] rusage[mem=30]",
@@ -89,9 +126,9 @@ rule mhv_coverage_pos:
 
 rule mhv_coverage_neg:
   input:
-     "results/sorted_dedup_bam/mhv/{sample}.mhv.sorted.bam"
+     "results/mhv/sorted_dedup_bam/{sample}.mhv.sorted.bam"
   output:
-     "results/bedgraph/mhv_neg/{sample}.mhv.neg.bg"
+     "results/mhv/bedgraph/{sample}.mhv.neg.bg"
   params:
     job_name = "coverage",
     memory = "select[mem>30] rusage[mem=30]",

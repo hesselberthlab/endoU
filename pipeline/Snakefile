@@ -8,13 +8,13 @@ configfile: "config.yaml"
 
 #DATA = config["DATA"]
 VIRAL_IDX = config["VIRAL_IDX"]
-U6_IDX = config["U6_IDX"]
-MRNA_IDX = config["MRNA_IDX"]
-TRNA_IDX = config["TRNA_IDX"]
-R18S_IDX = config["R18S_IDX"]
-R28S_IDX = config["R28S_IDX"]
-R5S_IDX = config["R5S_IDX"]
-R58S_IDX = config["R58S_IDX"] 
+#U6_IDX = config["U6_IDX"]
+#MRNA_IDX = config["MRNA_IDX"]
+#TRNA_IDX = config["TRNA_IDX"]
+#R18S_IDX = config["R18S_IDX"]
+#R28S_IDX = config["R28S_IDX"]
+#R5S_IDX = config["R5S_IDX"]
+#R58S_IDX = config["R58S_IDX"] 
 CHROM_SIZES = config["CHROM_SIZES"]
 ALL_IDX = config["ALL_IDX"]
 
@@ -24,35 +24,38 @@ SAMPLES = ["B6_mock_09", "B6_mock_012", "B6_mock_9", "B6_mock_12",
 "B6_ns2_12", "B6_nsp15_9","B6_nsp15_12", "IFNAR_mock_09",
 "IFNAR_mock_012", "IFNAR_mock_9","IFNAR_mock_12", "IFNAR_MHVV_9",
 "IFNAR_MHVV_12", "IFNAR_MHVS_9","IFNAR_MHVS_12", "IFNAR_ns2_9",
-"IFNAR_ns2_12" , "IFNAR_ns2_12" , "IFNAR_nsp15_12", "RNaseL_mock_09",
+"IFNAR_ns2_12" , "IFNAR_nsp15_9" , "IFNAR_nsp15_12", "RNaseL_mock_09",
 "RNaseL_mock_012", "RNaseL_mock_9", "RNaseL_mock_12", "RNaseL_MHVV_9",
 "RNaseL_MHVV_12", "RNaseL_MHVS_9", "RNaseL_MHVS_12", "RNaseL_ns2_9",
 "RNaseL_ns2_12", "RNaseL_nsp15_9", "RNaseL_nsp15_12"] 
 
-BAM_NAMES = ["mhv", "U6", "mRNA", "tRNA", "18S", "28S", "5S", "58S", "all"]
+#BAM_NAMES = ["mhv", "U6", "mRNA", "tRNA", "18S", "28S", "5S", "58S", "all"]
 
-READS = ["389788", "560505", "762750", "241522", "359643", "644062",
-"732214", "1429994", "86285", "867974", "842180", "860871", "669798",
-"244909", "431954", "103120", "354245", "280727", "693224", "996758",
-"526955", "478880", "551993", "1283500", "31365", "493649", "589278",
-"117918", "679846", "249303", "715577", "701409", "297094", "743544",
-"330562", "701889"] 
+BG_NAMES = ["mhv" , "tRNA", "r18s" , "r28s" , "r5.8s" , "r5s" , "U6" , "mRNA"]
+
+#READS = ["389788", "560505", "762750", "241522", "359643", "644062",
+#"732214", "1429994", "86285", "867974", "842180", "860871", "669798",
+#"244909", "431954", "103120", "354245", "280727", "693224", "996758",
+#"526955", "478880", "551993", "1283500", "31365", "493649", "589278",
+#"117918", "679846", "249303", "715577", "701409", "297094", "743544",
+#"330562", "701889"] 
+
 
 
 rule all:
  input:
-   expand("results/normalized_bg/{bam_name}/{sample}.{bam_name}.normalized.bg",
-     sample = SAMPLES,
-     bam_name = BAM_NAMES),
-   expand("results/normalized_bg/mhv/{sample}.mhv.pos.normalized.bg",
+   expand("results/split_bg/{bg_name}/{sample}.{bg_name}.bg",
+     bg_name = BG_NAMES,
      sample = SAMPLES),
-   expand("results/normalized_bg/mhv/{sample}.mhv.neg.normalized.bg",
+   expand("results/mhv/normalized_bg/{sample}.mhv.pos.normalized.bg",
+     sample = SAMPLES),
+   expand("results/mhv/normalized_bg/{sample}.mhv.neg.normalized.bg",
      sample = SAMPLES)
 
 include: 'rules/align.snake'
 include: 'rules/coverage.snake'
 include: 'rules/normalize.snake'
-
+include: 'rules/split_bedgraph.snake'
 
 
 

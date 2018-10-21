@@ -1,0 +1,22 @@
+''' split a bedgraph by chromosome '''
+
+import sys
+import os
+import glob
+
+rule split:
+  input:
+     "results/normalized_bg/{sample}.normalized.bg"
+  output:
+      "results/split_bg/{bg_name}/{sample}.{bg_name}.bg",
+  params:
+    job_name = "split",
+    memory = "select[mem>40] rusage[mem=40]",
+  log:
+    "results/log/split_bg/{sample}.txt"
+  threads:12
+  
+  shell:
+    "python split_bedgraph.py {input} > {output}"
+
+ 

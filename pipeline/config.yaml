@@ -30,10 +30,10 @@ R58S_IDX:
  "~/data-sets/genome/mm10/rRNA/mm5.8s"
 
 ALL_IDX:
- "~/data-sets/genome/mm10/all_RNAs/combined"
+ "~/data-sets/genome/mm10/all_RNAs/all"
 
 CHROM_SIZES:
- "~/data-sets/genome/mm10/all_RNAs/combined.sizes.genome"
+ "~/data-sets/genome/mm10/all_RNAs/all.chrom.sizes"
 
 
 

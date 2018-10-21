@@ -22,6 +22,7 @@ snakemake --drmaa "$args" \
     --resources all_threads=50 \
     --latency-wait 50 \
     --rerun-incomplete  \
-    --configfile config.yaml \
+    --configfile config.yaml
     #--unlock
+    #--forcerun
     #--directory /beevol/home/ancarr/projects/endoU/pipeline

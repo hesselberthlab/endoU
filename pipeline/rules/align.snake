@@ -3,249 +3,17 @@
 import os
 import glob
 
-rule mhv_align:
-  input:
-      "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
-  output:
-      "results/bam/mhv/{sample}.mhv.bam",
-  params:
-    sample = SAMPLES,
-    job_name = "mhv.bowtie",
-    memory = "select[mem>30] rusage[mem=30]",
-  log:
-    "results/log/bam/mhv/{sample}_align.txt"
-  threads:12
-
-  shell:
-    """
-    bowtie2 \
-        -p {threads} \
-        -U {input} \
-        -x {VIRAL_IDX} \
-        | samtools view -h - \
-        | samtools sort \
-          -@ {threads} \
-          -o {output}
-
-    samtools index \
-      -@ {threads} \
-      {output}
-    """
-
-rule Usix_align:
-  input:
-      "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
-  output:
-      "results/bam/U6/{sample}.U6.bam",
-  params:
-    sample = SAMPLES,
-    job_name = "U6.bowtie",
-    memory = "select[mem>30] rusage[mem=30]",
-  log:
-    "results/log/bam/U6/{sample}_align.txt"
-  threads:12
-
-  shell:
-    """
-    bowtie2 \
-        -p {threads} \
-        -U {input} \
-        -x {U6_IDX} \
-        | samtools view -h - \
-        | samtools sort \
-          -@ {threads} \
-          -o {output}
-
-    samtools index \
-      -@ {threads} \
-      {output}
-    """
-
-rule mRNA_align:
-  input:
-      "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
-  output:
-      "results/bam/mRNA/{sample}.mRNA.bam",
-  params:
-    sample = SAMPLES,
-    job_name = "mRNA.bowtie",
-    memory = "select[mem>30] rusage[mem=30]",
-  log:
-    "results/log/bam/mRNA/{sample}_align.txt"
-  threads:12
-
-  shell:
-    """
-    bowtie2 \
-        -p {threads} \
-        -U {input} \
-        -x {MRNA_IDX} \
-        | samtools view -h - \
-        | samtools sort \
-          -@ {threads} \
-          -o {output}
-
-    samtools index \
-      -@ {threads} \
-      {output}
-    """
-
-rule tRNA_align:
-  input:
-      "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
-  output:
-      "results/bam/tRNA/{sample}.tRNA.bam",
-  params:
-    sample = SAMPLES,
-    job_name = "tRNA.bowtie",
-    memory = "select[mem>30] rusage[mem=30]",
-  log:
-    "results/log/bam/tRNA/{sample}_align.txt"
-  threads: 12
-
-  shell:
-    """
-    bowtie2 \
-        -p {threads} \
-        -U {input} \
-        -x {TRNA_IDX} \
-        | samtools view -h - \
-        | samtools sort \
-          -@ {threads} \
-          -o {output}
-
-    samtools index \
-      -@ {threads} \
-      {output}
-    """
-
-rule r_eighteen_align:
-  input:
-      "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
-  output:
-      "results/bam/18S/{sample}.18S.bam",
-  params:
-    sample = SAMPLES,
-    job_name = "r18s.bowtie",
-    memory = "select[mem>30] rusage[mem=30]",
-  log:
-    "results/log/bam/r18S/{sample}_align.txt"
-  threads:12
-
-  shell:
-    """
-    bowtie2 \
-        -p {threads} \
-        -U {input} \
-        -x {R18S_IDX} \
-        | samtools view -h - \
-        | samtools sort \
-          -@ {threads} \
-          -o {output}
-
-    samtools index \
-      -@ {threads} \
-      {output}
-    """
-
-rule r_twentyeight_align:
-  input:
-      "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
-  output:
-      "results/bam/28S/{sample}.28S.bam",
-  params:
-    sample = SAMPLES,
-    job_name = "r28S.bowtie",
-    memory = "select[mem>30] rusage[mem=30]",
-  log:
-    "results/log/bam/r28S/{sample}_align.txt"
-  threads:12
-
-  shell:
-    """
-    bowtie2 \
-        -p {threads} \
-        -U {input} \
-        -x {R28S_IDX} \
-        | samtools view -h - \
-        | samtools sort \
-          -@ {threads} \
-          -o {output}
-
-    samtools index \
-      -@ {threads} \
-      {output}
-    """
-
-rule r_five_align:
-  input:
-      "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
-  output:
-      "results/bam/5S/{sample}.5S.bam",
-  params:
-    sample = SAMPLES,
-    job_name = "mhv.bowtie",
-    memory = "select[mem>30] rusage[mem=30]",
-  log:
-    "results/log/bam/r5S/{sample}_align.txt"
-  threads:12
-
-  shell:
-    """
-    bowtie2 \
-        -p {threads} \
-        -U {input} \
-        -x {R5S_IDX} \
-        | samtools view -h - \
-        | samtools sort \
-          -@ {threads} \
-          -o {output}
-
-    samtools index \
-      -@ {threads} \
-      {output}
-    """
-
-rule r_fiveandeight_align:
-  input:
-      "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
-  output:
-      "results/bam/58S/{sample}.58S.bam",
-  params:
-    sample = SAMPLES,
-    job_name = "mhv.bowtie",
-    memory = "select[mem>30] rusage[mem=30]",
-  log:
-    "results/log/bam/r5.8S/{sample}_align.txt"
-  threads:12
-
-  shell:
-    """
-    bowtie2 \
-        -p {threads} \
-        -U {input} \
-        -x {VIRAL_IDX} \
-        | samtools view -h - \
-        | samtools sort \
-          -@ {threads} \
-          -o {output}
-
-    samtools index \
-      -@ {threads} \
-      {output}
-    """
-
 rule all_align:
   input:
       "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
   output:
-      "results/bam/all/{sample}.all.bam",
+      "results/bam/{sample}.bam",
   params:
     sample = SAMPLES,
     job_name = "all.bowtie",
     memory = "select[mem>30] rusage[mem=30]",
   log:
-    "results/log/bam/all/{sample}_align.txt"
+    "results/log/bam/{sample}_align.txt"
   threads:12
 
   shell:
@@ -263,6 +31,41 @@ rule all_align:
       -@ {threads} \
       {output}
     """
+
+rule mhv_align:
+  input:
+      "/beevol/home/ancarr/data/23cp-seq/2017-08-25/fastq/{sample}.umi.fq.gz"
+  output:
+      "results/mhv/bam/{sample}.mhv.bam",
+  params:
+    sample = SAMPLES,
+    job_name = "mhv.bowtie",
+    memory = "select[mem>30] rusage[mem=30]",
+  log:
+    "results/log/bam/mhv/{sample}_align.txt"
+  threads:12 
+
+  shell:
+    """
+    
+    bowtie2 \
+       -p {threads} \
+       -U {input} \
+       -x {VIRAL_IDX} \
+       | samtools view -h - \
+       | samtools sort \
+       -@ {threads} \
+       -o {output}
+
+    samtools index \
+      -@ {threads} \
+      {output}
+    """
+
+
+
+
+
 
 
 
