@@ -16,7 +16,7 @@ for line in bedgraph:
     fields = line.split("\t")
     chrom, start, end, count, normalized_count = fields[:5]
     chrom = fields[0].split("|")[0].strip(">")
-    if chrom.startswith({bg_name}):
+    if chrom.startswith(tuple({"bg_name"})):
         print chrom, '\t',start, '\t',end,'\t',count,'\t', normalized_count
 
 
