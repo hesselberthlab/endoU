@@ -1,27 +1,23 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 ''' split a bedgraph by chromosome '''
 
 import sys
-import os
-import glob
 
-#BG_NAMES = {"mhv" , "tRNA", "r18s" , "r28s" , "r5.8s" , "r5s" , "U6" ,"mRNA"}
+chrom_names = ["mhv" , "tRNA", "r18s" , "r28s" , "r5.8s" , "r5s" , "U6", "mRNA"]
 
-bedgraph = file(sys.argv[1])
+# set up the output files for writing
+outputs = {}
+for name in chrom_names:
+    outputs[name] = file("%s.bg" % name, "w")
 
-#with open ('bedgraph', 'rt') as in_file
+for line in file(sys.argv[1]):
 
-for line in bedgraph:
     fields = line.split("\t")
-    chrom, start, end, count, normalized_count = fields[:5]
     chrom = fields[0].split("|")[0].strip(">")
-    if chrom.startswith(tuple({"bg_name"})):
-        print chrom, '\t',start, '\t',end,'\t',count,'\t', normalized_count
+    # look up the output file by chrom name
+    output = outputs[chrom]
 
-
-
-
-
-
+    print(chrom, start, end,count, normalized_count,
+          sep = "\t", file=output)
 
