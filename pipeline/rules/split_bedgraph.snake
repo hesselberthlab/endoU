@@ -8,15 +8,17 @@ rule split:
   input:
      "results/normalized_bg/{sample}.normalized.bg"
   output:
-      "results/split_bg/{bg_name}/{sample}.{bg_name}.bg",
+      expand("results/split_bg/{bg_name}/{{sample}}.{bg_name}.bg",
+             bg_name = BG_NAMES)
   params:
     job_name = "split",
     memory = "select[mem>40] rusage[mem=40]",
+    outdir = "results/split_bg"
   log:
     "results/log/split_bg/{sample}.txt"
-  threads:12
+  threads:1
   
   shell:
-    "python split_bedgraph.py {input} > {output}"
+    "python3 split_bedgraph.py {input} {params.outdir}"
 
  
