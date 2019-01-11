@@ -19,15 +19,11 @@ CHROM_SIZES = config["CHROM_SIZES"]
 ALL_IDX = config["ALL_IDX"]
 
 
-SAMPLES = ["B6_mock_09", "B6_mock_012", "B6_mock_9", "B6_mock_12",
-"B6_MHVV_9","B6_MHVV_12", "B6_MHVS_9", "B6_MHVS_12", "B6_ns2_9",
-"B6_ns2_12", "B6_nsp15_9","B6_nsp15_12", "IFNAR_mock_09",
-"IFNAR_mock_012", "IFNAR_mock_9","IFNAR_mock_12", "IFNAR_MHVV_9",
-"IFNAR_MHVV_12", "IFNAR_MHVS_9","IFNAR_MHVS_12", "IFNAR_ns2_9",
-"IFNAR_ns2_12" , "IFNAR_nsp15_9" , "IFNAR_nsp15_12", "RNaseL_mock_09",
-"RNaseL_mock_012", "RNaseL_mock_9", "RNaseL_mock_12", "RNaseL_MHVV_9",
-"RNaseL_MHVV_12", "RNaseL_MHVS_9", "RNaseL_MHVS_12", "RNaseL_ns2_9",
-"RNaseL_ns2_12", "RNaseL_nsp15_9", "RNaseL_nsp15_12"] 
+SAMPLES = ["B6_mock_09", "B6_mock_012","B6_mock_9","B6_mock_12","B6_MHVV_9","B6_MHVV_12","B6_MHVS_9", "B6_MHVS_12", 
+"B6_ns2_9","B6_ns2_12", "B6_nsp15_9","B6_nsp15_12", "IFNAR_mock_09", "IFNAR_mock_012","IFNAR_mock_9","IFNAR_mock_12", 
+"IFNAR_MHVV_9", "IFNAR_MHVV_12", "IFNAR_MHVS_9","IFNAR_MHVS_12","IFNAR_ns2_9","IFNAR_ns2_12", "IFNAR_nsp15_9",
+"IFNAR_nsp15_12", "RNaseL_mock_09","RNaseL_mock_012", "RNaseL_MHVS_9","RNaseL_MHVS_12","RNaseL_mock_9",
+"RNaseL_mock_12", "RNaseL_MHVV_9","RNaseL_MHVV_12", "RNaseL_ns2_9", "RNaseL_ns2_12", "RNaseL_nsp15_9", "RNaseL_nsp15_12"] 
 
 #BAM_NAMES = ["mhv", "U6", "mRNA", "tRNA", "18S", "28S", "5S", "58S", "all"]
 
