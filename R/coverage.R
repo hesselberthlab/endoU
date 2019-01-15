@@ -33,7 +33,7 @@ read_file <- function(x) {
 #'
 #' @export
 
-coverage_table <- function(x, y, z) {
+coverage_table <- function(x) {
   purrr::map_df(x, read_file) %>%
   dplyr::mutate(name = str_replace(name, ".mhv.neg.dinuc.bg", "")) %>%
   separate(name, into = c('cell', 'virus', 'time'), sep = '_')
