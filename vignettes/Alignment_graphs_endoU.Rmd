@@ -1,0 +1,910 @@
+---
+title: "Alignment graphs and tables"
+author: "Rachel Ancar"
+date: "11/01/2018"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+
+```{r, message = F, warning = F}
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(cowplot)
+library(RColorBrewer)
+library(purrr)
+library(shiny)
+library(DT)
+
+```
+
+
+#Experiment 1: overview of counts and normalized counts for each type of RNA species
+
+
+##Table of umi-corrected reads
+
+```{r, warning = F}
+
+data_dir = "~/Dropbox (Hesselberth Lab)/Rachel_data/EndoU_project/all_RNA_bg/exp_1"
+data_files = list.files(data_dir, full.names = T)
+
+read_file <- function(x) {
+  df <- readr::read_tsv(x, col_names = c("chrom", "start", "end", "count", "normalized"))
+  df$name <- basename(x)
+  df
+}
+
+all_table <- purrr::map_df(data_files, read_file) %>%
+  mutate(name = str_replace(name, ".normalized.bg", "")) %>%
+  separate(chrom, into = c('RNA_type', 'extra'), sep = '\\|') %>% 
+  dplyr::select(-extra) %>%
+  separate(name, into = c('cell', 'virus', 'time'), sep = '_') 
+
+all_reads <- all_table %>%
+  dplyr::group_by(cell, virus, time) %>%
+  dplyr::mutate(total_umi_reads = sum(count)) %>%
+  dplyr::select(cell, virus, time, total_umi_reads) %>%
+  unique()
+
+mhv_reads <- all_table %>%
+  dplyr::filter(RNA_type == "mhv") %>%
+  dplyr::group_by(cell, virus, time) %>%
+  dplyr::mutate(mhv_umi_reads = sum(count)) %>%
+  dplyr::select(cell, virus, time, mhv_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(all_reads, mhv_reads)
+
+mRNA_reads <- all_table %>%
+  dplyr::filter(RNA_type == "mRNA") %>%
+  dplyr::group_by(cell, virus, time) %>%
+  dplyr::mutate(mRNA_umi_reads = sum(count)) %>%
+  dplyr::select(cell, virus, time, mRNA_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, mRNA_reads)
+
+tRNA_reads <- all_table %>%
+  dplyr::filter(RNA_type == "tRNA") %>%
+  dplyr::group_by(cell, virus, time) %>%
+  dplyr::mutate(tRNA_umi_reads = sum(count)) %>%
+  dplyr::select(cell, virus, time, tRNA_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, tRNA_reads)
+
+U6_reads <- all_table %>%
+  dplyr::filter(RNA_type == "U6") %>%
+  dplyr::group_by(cell, virus, time) %>%
+  dplyr::mutate(U6_umi_reads = sum(count)) %>%
+  dplyr::select(cell, virus, time, U6_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, U6_reads)
+
+r5s_reads <- all_table %>%
+  dplyr::filter(RNA_type == "r5s") %>%
+  dplyr::group_by(cell, virus, time) %>%
+  dplyr::mutate(r5s_umi_reads = sum(count)) %>%
+  dplyr::select(cell, virus, time, r5s_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, r5s_reads)
+
+r5.8s_reads <- all_table %>%
+  dplyr::filter(RNA_type == "r5.8s") %>%
+  dplyr::group_by(cell, virus, time) %>%
+  dplyr::mutate(r5.8s_umi_reads = sum(count)) %>%
+  dplyr::select(cell, virus, time, r5.8s_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, r5.8s_reads)
+
+r18s_reads <- all_table %>%
+  dplyr::filter(RNA_type == "r18s") %>%
+  dplyr::group_by(cell, virus, time) %>%
+  dplyr::mutate(r18s_umi_reads = sum(count)) %>%
+  dplyr::select(cell, virus, time, r18s_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, r18s_reads)
+
+r28s_reads <- all_table %>%
+  dplyr::filter(RNA_type == "r28s") %>%
+  dplyr::group_by(cell, virus, time) %>%
+  dplyr::mutate(r28s_umi_reads = sum(count)) %>%
+  dplyr::select(cell, virus, time, r28s_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, r28s_reads)
+
+datatable(alignments_table)
+
+
+```
+
+##Table and graphs of total and percent total umi-reads for each RNA species
+
+```{r, warning = F}
+
+percent_total <- function(x){
+  percent_cdna <- x %>% 
+  mutate_at(.fun = funs(percent = ./total_umi_reads * 100), .vars = 5:12)
+  return(percent_cdna)
+}
+
+final_table <- percent_total(alignments_table)
+
+datatable(final_table)
+
+
+```
+
+### MHV
+
+```{r, warning = F}
+
+MHVreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = mhv_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="MHV (+) RNA", y="Umi corrected reads")
+MHVreads_graph
+
+MHVpercentreads_graph <- final_table %>%
+  ggplot(aes(x = virus , y = mhv_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ cell) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="MHV (+) RNA", y="Percent umi corrected reads")
+MHVpercentreads_graph
+
+
+MHV_final <- final_table %>% 
+        filter(time != "012" & time != "09") %>%
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        mutate(time = fct_relevel(time, "9", "12")) %>%
+        ggplot(aes(x = virus , y = mhv_umi_reads_percent)) + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        scale_fill_grey(start=0.8, end=0.2) +
+        facet_grid( ~ cell) +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="MHV genomic RNA", y="Percent UMI corrected reads")
+MHV_final
+
+ggsave(filename="B6_reads.pdf", width = 10, height = 4, plot=MHV_final)
+
+```
+
+### mRNA 
+
+```{r}
+
+mRNAreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = mRNA_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="mRNA", y="Umi corrected reads")
+mRNAreads_graph
+
+mRNApercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = mRNA_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="mRNA", y="Percent umi corrected reads")
+mRNApercentreads_graph
+
+mRNA_final <- final_table %>% 
+        filter(time != "012" & time != "09") %>%
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        mutate(time = fct_relevel(time, "9", "12")) %>%
+        ggplot(aes(x = virus , y = mRNA_umi_reads_percent)) + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        scale_fill_grey(start=0.8, end=0.2) +
+        facet_grid( ~ cell) +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="Host mRNAs", y="Percent UMI corrected reads")
+mRNA_final
+
+ggsave(filename="B6_reads.pdf", plot=mRNA_final)
+
+
+```
+
+#tRNAs
+
+```{r}
+
+tRNAreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = tRNA_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="tRNA", y="Umi corrected reads")
+tRNAreads_graph
+
+tRNApercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = tRNA_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="tRNA", y="Percent umi corrected reads")
+tRNApercentreads_graph
+
+tRNA_final <- final_table %>% 
+        filter(time != "012" & time != "09") %>%
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        mutate(time = fct_relevel(time, "9", "12")) %>%
+        ggplot(aes(x = virus , y = tRNA_umi_reads_percent)) + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        scale_fill_grey(start=0.8, end=0.2) +
+        facet_grid( ~ cell) +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="Host tRNAs", y="Percent UMI corrected reads")
+tRNA_final
+
+ggsave(filename="B6_reads.pdf", plot=tRNA_final)
+
+
+```
+
+#U6
+
+```{r}
+
+U6reads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = U6_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="U6", y="Umi corrected reads")
+U6reads_graph
+
+U6percentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = U6_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="U6", y="Percent umi corrected reads")
+U6percentreads_graph
+
+
+U6_final <- final_table %>% 
+        filter(time != "012" & time != "09") %>%
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        mutate(time = fct_relevel(time, "9", "12")) %>%
+        ggplot(aes(x = virus , y = U6_umi_reads_percent)) + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        scale_fill_grey(start=0.8, end=0.2) +
+        facet_grid( ~ cell) +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="snRNA U6", y="Percent UMI corrected reads")
+U6_final
+
+ggsave(filename="B6_reads.pdf", plot=U6_final)
+
+```
+
+#5s rRNA
+
+```{r}
+
+r5sreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r5s_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="5s rRNA", y="Umi corrected reads")
+r5sreads_graph
+
+r5spercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r5s_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="5s rRNA", y="Percent umi corrected reads")
+r5spercentreads_graph
+
+
+r5s_final <- final_table %>% 
+        filter(time != "012" & time != "09") %>%
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        mutate(time = fct_relevel(time, "9", "12")) %>%
+        ggplot(aes(x = virus , y = r5s_umi_reads_percent)) + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        scale_fill_grey(start=0.8, end=0.2) +
+        facet_grid( ~ cell) +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="5s rRNA", y="Percent UMI corrected reads")
+r5s_final
+
+ggsave(filename="B6_reads.pdf", plot=r5s_final)
+
+
+
+
+```
+
+#18s rRNA
+
+```{r}
+
+r18sreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r18s_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="18s rRNA", y="Umi corrected reads")
+r18sreads_graph
+
+r18spercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r18s_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="18s rRNA", y="Percent umi corrected reads")
+r18spercentreads_graph
+
+
+r18s_final <- final_table %>% 
+        filter(time != "012" & time != "09") %>%
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        mutate(time = fct_relevel(time, "9", "12")) %>%
+        ggplot(aes(x = virus , y = r18s_umi_reads_percent)) + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        scale_fill_grey(start=0.8, end=0.2) +
+        facet_grid( ~ cell) +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="18s rRNA", y="Percent UMI corrected reads")
+r18s_final
+
+ggsave(filename="B6_reads.pdf", plot=r18s_final)
+
+
+```
+
+#5.8 rRNA
+
+```{r}
+
+r5.8sreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r5.8s_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="5.8s rRNA", y="Umi corrected reads")
+r5.8sreads_graph
+
+r5.8spercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r5.8s_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="5.8s rRNA", y="Percent umi corrected reads")
+r5.8spercentreads_graph
+
+r5.8s_final <- final_table %>% 
+        filter(time != "012" & time != "09") %>%
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        mutate(time = fct_relevel(time, "9", "12")) %>%
+        ggplot(aes(x = virus , y = r5.8s_umi_reads_percent)) + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        scale_fill_grey(start=0.8, end=0.2) +
+        facet_grid( ~ cell) +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="5.8s rRNA", y="Percent UMI corrected reads")
+r5.8s_final
+
+ggsave(filename="B6_reads.pdf", plot=r5.8s_final)
+
+```
+
+#28s rRNA
+
+```{r}
+
+r28sreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r28s_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="28s rRNA", y="Umi corrected reads")
+r28sreads_graph
+
+r28spercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r28s_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="28s rRNA", y="Percent umi corrected reads")
+r28spercentreads_graph
+
+r28s_final <- final_table %>% 
+        filter(time != "012" & time != "09") %>%
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        mutate(time = fct_relevel(time, "9", "12")) %>%
+        ggplot(aes(x = virus , y = r28s_umi_reads_percent)) + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        scale_fill_grey(start=0.8, end=0.2) +
+        facet_grid( ~ cell) +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="28s rRNA", y="Percent UMI corrected reads")
+r28s_final
+
+ggsave(filename="B6_reads.pdf", plot=r28s_final)
+
+
+```
+
+##Graphs of percent total umi-reads for all RNA subtypes by cell type
+
+
+###B6
+
+```{r, warning = F}
+
+B6_graph <- final_table %>% 
+        filter(time != "012" & time != "09" & time != "9") %>%
+        filter(cell == "B6") %>%
+        gather(RNA_type, percent_total_reads, 13:20) %>%
+        separate(RNA_type, into = c('RNA_type'), sep = '_') %>%
+        mutate(RNA_type = fct_relevel(RNA_type, "mhv", "mRNA", "r18s", "r28s", "r5.8s", "r5s", "tRNA", "U6")) %>% 
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        ggplot(aes(x = RNA_type , y = percent_total_reads)) + 
+        scale_fill_grey(start=0.8, end=0.2) +
+        geom_bar(aes(fill = virus), stat = "identity", position = 'dodge') +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="B6 WT macrophages", y="Percent UMI corrected reads")
+B6_graph
+
+ggsave(filename="B6_reads.pdf", plot=B6_graph)
+          
+
+```
+
+### IFNAR KO
+
+```{r, warning = F}
+
+IFNAR_graph <- final_table %>%
+        filter(cell == "IFNAR") %>%
+        gather(RNA_type, percent_total_reads, 13:20) %>%
+        separate(RNA_type, into = c('RNA_type'), sep = '_') %>%
+        ggplot(aes(x = RNA_type , y = percent_total_reads)) + 
+        scale_fill_brewer(palette = 'Set1') + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        theme_cowplot() + 
+        facet_grid( ~ virus) +
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="B6 IFNAR KO macrophages", y="Percent umi corrected reads")
+IFNAR_graph
+
+
+
+B6_graph <- final_table %>% 
+        filter(time != "012" & time != "09" & time != "9") %>%
+        filter(cell == "IFNAR") %>%
+        gather(RNA_type, percent_total_reads, 13:20) %>%
+        separate(RNA_type, into = c('RNA_type'), sep = '_') %>%
+        mutate(RNA_type = fct_relevel(RNA_type, "mhv", "mRNA", "r18s", "r28s", "r5.8s", "r5s", "tRNA", "U6")) %>% 
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        ggplot(aes(x = RNA_type , y = percent_total_reads)) + 
+        scale_fill_grey(start=0.8, end=0.2) +
+        geom_bar(aes(fill = virus), stat = "identity", position = 'dodge') +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="B6 IFNAR KO macrophages", y="Percent UMI corrected reads")
+B6_graph
+
+```
+
+
+### RNaseL KO
+
+```{r, warning = F}
+
+RNaseL_graph <- final_table %>%
+        filter(cell == "RNaseL") %>%
+        gather(RNA_type, percent_total_reads, 13:20) %>%
+        separate(RNA_type, into = c('RNA_type'), sep = '_') %>%
+        ggplot(aes(x = RNA_type , y = percent_total_reads)) + 
+        scale_fill_brewer(palette = 'Set1') + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        theme_cowplot() + 
+        facet_grid( ~ virus) +
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="B6 RNaseL KO macrophages", y="Percent umi corrected reads")
+RNaseL_graph
+
+B6_graph <- final_table %>% 
+        filter(time != "012" & time != "09" & time != "9") %>%
+        filter(cell == "RNaseL") %>%
+        gather(RNA_type, percent_total_reads, 13:20) %>%
+        separate(RNA_type, into = c('RNA_type'), sep = '_') %>%
+        mutate(RNA_type = fct_relevel(RNA_type, "mhv", "mRNA", "r18s", "r28s", "r5.8s", "r5s", "tRNA", "U6")) %>% 
+        ungroup() %>%
+        mutate(virus = fct_relevel(virus, "mock", "MHVS", "MHVV", "ns2", "nsp15")) %>% 
+        ggplot(aes(x = RNA_type , y = percent_total_reads)) + 
+        scale_fill_grey(start=0.8, end=0.2) +
+        geom_bar(aes(fill = virus), stat = "identity", position = 'dodge') +
+        theme_cowplot() + 
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="RNaseL (-/-) bone marrow derived macrophages 12 hpi", y="Percent UMI corrected reads")
+B6_graph
+
+```
+
+#Experiment 2: overview of counts and normalized counts for each type of RNA species
+
+
+##Table of umi-corrected reads
+
+```{r, warning = F}
+
+data_dir = "~/Dropbox (Hesselberth Lab)/Rachel_data/EndoU_project/all_RNA_bg/exp_2"
+data_files = list.files(data_dir, full.names = T)
+
+read_file <- function(x) {
+  df <- readr::read_tsv(x, col_names = c("chrom", "start", "end", "count", "normalized"))
+  df$name <- basename(x)
+  df
+}
+
+all_table <- purrr::map_df(data_files, read_file) %>%
+  mutate(name = str_replace(name, ".normalized.bg", "")) %>%
+  separate(chrom, into = c('RNA_type', 'extra'), sep = '\\|') %>% 
+  dplyr::select(-extra) %>%
+  separate(name, into = c('cell', 'virus', 'time'), sep = '_') 
+
+all_reads <- all_table %>%
+  group_by(cell, virus, time) %>%
+  mutate(total_umi_reads = sum(count)) %>%
+  select(cell, virus, time, total_umi_reads) %>%
+  unique()
+
+mhv_reads <- all_table %>%
+  filter(RNA_type == "mhv") %>%
+  group_by(cell, virus, time) %>%
+  mutate(mhv_umi_reads = sum(count)) %>%
+  select(cell, virus, time, mhv_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(all_reads, mhv_reads)
+
+mRNA_reads <- all_table %>%
+  filter(RNA_type == "mRNA") %>%
+  group_by(cell, virus, time) %>%
+  mutate(mRNA_umi_reads = sum(count)) %>%
+  select(cell, virus, time, mRNA_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, mRNA_reads)
+
+r5.8s_reads <- all_table %>%
+  filter(RNA_type == "r5.8s") %>%
+  group_by(cell, virus, time) %>%
+  mutate(r5.8s_umi_reads = sum(count)) %>%
+  select(cell, virus, time, r5.8s_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, r5.8s_reads)
+
+r5s_reads <- all_table %>%
+  filter(RNA_type == "r5s") %>%
+  group_by(cell, virus, time) %>%
+  mutate(r5s_umi_reads = sum(count)) %>%
+  select(cell, virus, time, r5s_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, r5s_reads)
+
+r18s_reads <- all_table %>%
+  filter(RNA_type == "r18s") %>%
+  group_by(cell, virus, time) %>%
+  mutate(r18s_umi_reads = sum(count)) %>%
+  select(cell, virus, time, r18s_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, r18s_reads)
+
+r28s_reads <- all_table %>%
+  filter(RNA_type == "r28s") %>%
+  group_by(cell, virus, time) %>%
+  mutate(r28s_umi_reads = sum(count)) %>%
+  select(cell, virus, time, r28s_umi_reads) %>%
+  unique()
+
+alignments_table <- left_join(alignments_table, r28s_reads) %>%
+  mutate_all(funs(replace(., is.na(.), 0)))
+
+datatable(alignments_table)
+
+
+```
+
+##Table and graphs of total and percent total umi-reads for each RNA species
+
+```{r, warning = F}
+
+percent_total <- function(x){
+  percent_cdna <- x %>% 
+  mutate_at(.fun = funs(percent = ./total_umi_reads * 100), .vars = 5:10)
+  return(percent_cdna)
+}
+
+final_table <- percent_total(alignments_table)
+
+datatable(final_table)
+
+
+```
+
+### MHV
+
+```{r, warning = F}
+
+MHVreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = mhv_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="MHV (+) RNA", y="Umi corrected reads")
+MHVreads_graph
+
+MHVpercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = mhv_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="MHV (+) RNA", y="Percent umi corrected reads")
+MHVpercentreads_graph
+
+```
+
+### mRNA 
+
+```{r}
+
+mRNAreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = mRNA_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="mRNA", y="Umi corrected reads")
+mRNAreads_graph
+
+mRNApercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = mRNA_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="mRNA", y="Percent umi corrected reads")
+mRNApercentreads_graph
+
+
+```
+
+#18s rRNA
+
+```{r}
+
+r18sreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r18s_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="18s rRNA", y="Umi corrected reads")
+r18sreads_graph
+
+r18spercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r18s_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="18s rRNA", y="Percent umi corrected reads")
+r18spercentreads_graph
+
+```
+
+#5.8 rRNA
+
+```{r}
+
+r5.8sreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r5.8s_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="5.8s rRNA", y="Umi corrected reads")
+r5.8sreads_graph
+
+r5.8spercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r5.8s_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="5.8s rRNA", y="Percent umi corrected reads")
+r5.8spercentreads_graph
+
+```
+
+#5s
+
+```{r}
+
+r5sreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r5s_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="5s rRNA", y="Umi corrected reads")
+r5sreads_graph
+
+r5spercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r5s_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="5s rRNA", y="Percent umi corrected reads")
+r5spercentreads_graph
+
+```
+
+#28s rRNA
+
+```{r}
+
+r28sreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r28s_umi_reads)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="28s rRNA", y="Umi corrected reads")
+r28sreads_graph
+
+r28spercentreads_graph <- final_table %>%
+  ggplot(aes(x = cell , y = r28s_umi_reads_percent)) + 
+  scale_fill_brewer(palette = 'Set1') + 
+  geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+  theme_cowplot() + 
+  facet_grid( ~ virus) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  labs(x="28s rRNA", y="Percent umi corrected reads")
+r28spercentreads_graph
+
+
+```
+
+##Graphs of percent total umi-reads for all RNA subtypes by cell type
+
+
+###B6
+
+```{r, warning = F}
+
+B6_graph <- final_table %>%
+        filter(cell == "B6") %>%
+        gather(RNA_type, percent_total_reads, 11:16) %>%
+        separate(RNA_type, into = c('RNA_type'), sep = '_') %>%
+        ggplot(aes(x = RNA_type , y = percent_total_reads)) + 
+        scale_fill_brewer(palette = 'Set1') + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        theme_cowplot() + 
+        facet_grid( ~ virus) +
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="B6 WT macrophages", y="Percent umi corrected reads")
+B6_graph
+          
+
+```
+
+### RNaseL KO
+
+```{r, warning = F}
+
+RNaseL_graph <- final_table %>%
+        filter(cell == "RNaseL") %>%
+        gather(RNA_type, percent_total_reads, 11:16) %>%
+        separate(RNA_type, into = c('RNA_type'), sep = '_') %>%
+        ggplot(aes(x = RNA_type , y = percent_total_reads)) + 
+        scale_fill_brewer(palette = 'Set1') + 
+        geom_bar(aes(fill = time), stat = "identity", position = 'dodge') +
+        theme_cowplot() + 
+        facet_grid( ~ virus) +
+        theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 8)) +
+        labs(x="B6 RNaseL KO macrophages", y="Percent umi corrected reads")
+RNaseL_graph
+
+```
+

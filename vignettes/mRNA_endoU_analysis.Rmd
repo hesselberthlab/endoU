@@ -1,0 +1,184 @@
+---
+title: "Analysis of mRNA to Detect EndoU Cleavage Sites for experiment 1"
+author: "Rachel Ancar"
+date: "4/28/2018"
+output:
+  html_document:
+    code_folding: hide
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+```
+
+
+```{r, message = F, warning = F}
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(cowplot)
+library(RColorBrewer)
+library(purrr)
+library(shiny)
+library(DT)
+
+```
+
+2´,3´-cyclic phosphate RNA-sequencing libraries were prepared from mouse macrophages: B6 (WT), IFNAR KO, RNaseL KO. These cells were either mock infected or infected with WT MHV virus (from Volker or Susan), MHV mutated to inactivate ns2 (phosphodiesterase) activity, or MHV mutated to inactivate nsp15 (endoribonuclease) activity for 9 and 12 hours. 
+
+```{r, message = F, warning = F}
+
+sample_info_table <- read_tsv("sample_info.txt", col_names = c("cell type", "virus type", "time"))
+datatable(sample_info_table)
+
+```
+
+In this analysis, reads from all libraries were aligned to reference file containing Mus musculus sequences of Refseq mRNAs. Bedgraph files containing counts at each  3´-cleavage site were generated for this analysis. 
+
+# Identify RNAs with the most abundant capture of 2´,3´- cyclic phosphates across all samples.
+
+In this analysis, the total and normalized counts per RNA were summed and filtered to exclude RNAs with less than 100 total reads and less than 5 reads per position. Additionally, an analysis to detect RNA reads unique to infected samples was performed to interogate RNA cleavage that may be dependent upon nsp15. 
+
+```{r, message = F, warning = F}
+
+data_dir_mRNA = "~/Dropbox (Hesselberth Lab)/Rachel_data/EndoU_project/mRNA/exp1"
+data_files_mRNA = list.files(data_dir_mRNA, full.names = T)
+
+read_file <- function(x) {
+  df <- readr::read_tsv(x, col_names = c("chrom", "start", "end", "count", "normalized_count"))
+  df$name <- basename(x)
+  df
+}
+
+table_mRNA <- purrr::map_df(data_files_mRNA, read_file) %>%
+  mutate(name = str_replace(name, ".mRNA.bg", "")) %>%
+  separate(name, into = c('cell', 'virus', 'time'), sep = '_') %>%
+  separate(chrom, into = c('extra', 'chrom'), sep = '\\|') %>%
+  dplyr::select(-extra) %>%
+  separate(chrom, into = c('genome', 'chrom', 'mRNA'), sep = '\\_') %>%
+  dplyr::select(-genome, -chrom)  %>%
+  filter(count >= 5) 
+
+top_mRNA <- table_mRNA %>% 
+  group_by(mRNA, cell, virus, time) %>% 
+  summarise(total_count = sum(count), total_normalcount = sum(normalized_count)) %>%
+  arrange(desc(total_count)) %>%
+  filter(total_count >= 100) 
+
+```
+
+```{r}
+
+ORF_collection <- read_tsv("MouseORFeomeCollection.txt") %>%
+  dplyr::select(1,5) %>%
+  rename(mRNA = "Accession #")
+
+top_mRNA_annotated <- left_join(top_mRNA, ORF_collection)
+
+mock_mRNA <- top_mRNA_annotated %>% filter(virus == "mock") 
+
+virus_mRNA <- top_mRNA_annotated %>% filter(virus != "mock")
+
+only_virus_mRNA <- top_mRNA_annotated %>%        
+  anti_join(mock_mRNA, by = "mRNA")
+  
+```
+
+##Top 100 RNAs by cell, virus, and time for all types of infections
+
+```{r}
+
+top100_mRNA <- top_mRNA_annotated %>% head(n =100)
+datatable(top100_mRNA)
+
+```
+
+##Top 100 RNAs by cell, virus, and time for only infected cells.
+
+```{r}
+
+top100_virus_mRNA <- virus_mRNA %>% head(n =100)
+datatable(top100_virus_mRNA)
+
+```
+
+##Top 100 RNAs by cell, virus, and time for only infected cells, excluding all mRNA captured in mock libraries
+
+```{r}
+
+datatable(only_virus_mRNA)
+
+```
+
+##Plots of some of the most abundant RNAs captured in both mock and infected samples
+
+```{r, message = F, warning = F}
+
+Cdk8 <- top_mRNA %>% filter(mRNA == "BC148539") %>%
+    filter(time != "09") %>%
+    filter(time != "012") %>%
+    ggplot(aes(x = mRNA, y = total_normalcount, fill = virus)) +
+    geom_bar(stat = "identity", position = 'dodge') +
+    scale_fill_brewer(palette = 'Set1') + 
+    theme_cowplot() +
+    facet_grid(time ~ cell) + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+    labs(x="mRNA", y="Total normalized counts per mRNA") +
+  ggtitle("Cdk8")
+Cdk8 
+
+
+Hexb <- top_mRNA %>% filter(mRNA == "BC146503") %>%
+    filter(time != "09") %>%
+    filter(time != "012") %>%
+    ggplot(aes(x = mRNA, y = total_normalcount, fill = virus)) +
+    geom_bar(stat = "identity", position = 'dodge') +
+    scale_fill_brewer(palette = 'Set1') + 
+    theme_cowplot() +
+    facet_grid(time ~ cell) + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+    labs(x="mRNA", y="Total normalized counts per mRNA") +
+  ggtitle("Hexb")
+Hexb
+
+Grik3 <- top_mRNA %>% filter(mRNA == "BC160379") %>%
+    filter(time != "09") %>%
+    filter(time != "012") %>%
+    ggplot(aes(x = mRNA, y = total_normalcount, fill = virus)) +
+    geom_bar(stat = "identity", position = 'dodge') +
+    scale_fill_brewer(palette = 'Set1') + 
+    theme_cowplot() +
+    facet_grid(time ~ cell) + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+    labs(x="mRNA", y="Total normalized counts per mRNA") +
+  ggtitle("Grik3")
+Grik3
+
+
+```
+
+##Plot of abundant RNA captured in the infected samples
+
+```{r}
+
+Gvin1 <- top_mRNA %>% filter(mRNA == "BC172613") %>%
+    filter(time != "09") %>%
+    filter(time != "012") %>%
+    ggplot(aes(x = mRNA, y = total_normalcount, fill = virus)) +
+    geom_bar(stat = "identity", position = 'dodge') +
+    scale_fill_brewer(palette = 'Set1') + 
+    theme_cowplot() +
+    facet_grid(time ~ cell) + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+    labs(x="mRNA", y="Total normalized counts per mRNA") +
+    ggtitle("Gvin1")
+Gvin1
+
+
+```
