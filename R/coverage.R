@@ -68,7 +68,9 @@ complete_table <- function(table, dinuc_path) {
     )
   ))
 
-  final_table <-inner_join(x, y, by = "start")
+  final_table <- inner_join(x, y, by = "start")
+
+  final_table
 }
 
 #' Normalize coverage table using the sum of aligned reads per library
@@ -97,6 +99,8 @@ normalize_table <- function(path, table){
   final_table <- inner_join(table, all_reads, by = c("cell", "virus", "time")) %>%
     dplyr::mutate(norm_count = (count/total_umi_reads)*100) %>%
     dplyr::select(-chrom, -normalized_count, -total_umi_reads)
+
+  final_table
 }
 
 
