@@ -7,7 +7,11 @@
 plot_depth_multi(data, x, y)
 }
 \arguments{
-\item{x}{table object with count and position data}
+\item{data}{table object with count and position data}
+
+\item{x}{variable for x-axis}
+
+\item{y}{variable for y-axis}
 }
 \description{
 Exploratory plots
