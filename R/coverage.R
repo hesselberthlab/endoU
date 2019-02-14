@@ -95,7 +95,7 @@ normalize_table <- function(path, table){
     unique()
 
   final_table <- inner_join(table, all_reads, by = c("cell", "virus", "time")) %>%
-    dplyr::mutate(new_normal_count = (count/total_umi_reads)*100) %>%
+    dplyr::mutate(norm_count = (count/total_umi_reads)*100) %>%
     dplyr::select(-chrom, -normalized_count, -total_umi_reads)
 }
 
