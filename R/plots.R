@@ -21,7 +21,8 @@ plot_depth_single <- function(data, x, y, cell, virus) {
   x <- enquo(x)
   y <- enquo(y)
 
-  data <- filter(data, cell == cell & virus == virus)
+  data <- filter(data, cell == cell & virus == virus) %>%
+    dplyr::mutate(start == (start/1000))
 
   ggplot(data, aes(x = !!x, y = !!y, fill = time, width = 25)) +
     geom_bar(stat = "identity", position = "identity") +
@@ -29,11 +30,10 @@ plot_depth_single <- function(data, x, y, cell, virus) {
     theme_cowplot() +
     # facet_grid(virus ~ cell) +
     theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-    labs(x="Position", y="Normalized counts") +
-    scale_x_continuous(breaks=seq(0, 30000, 5000))
+    labs(x="Position (kb)", y="Normalized counts")
+    #scale_x_continuous(breaks=seq(0, 30000, 5000))
 }
 
-
-
-
-
+ #cells <- c("B6", "IFNAR", "RNASEL")
+ #virus <- c("MHVS", "MHVV", "mock", "ns2", "nsp15")
+ #combos <- tidyr::crossing(cells, virus)
