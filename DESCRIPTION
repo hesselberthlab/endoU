@@ -16,3 +16,12 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+Imports: 
+    dplyr,
+    ggplot2,
+    tidyr,
+    rlang,
+    readr,
+    stringr,
+    cowplot,
+    DT
