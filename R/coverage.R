@@ -19,7 +19,7 @@ read_file <- function(x) {
   tab <- suppressMessages(readr::read_tsv(
     x,
     col_names = c(
-      "chrom", "start", "count", "normalized_count"
+      "chrom", "pos", "count", "normalized_count"
     )
   ))
   tab$filename <- basename(x)
@@ -64,11 +64,11 @@ complete_table <- function(table, dinuc_path) {
   y <- suppressMessages(readr::read_tsv(
     dinuc_path,
     col_names = c(
-      "start", "dinuc"
+      "pos", "dinuc"
     )
   ))
 
-  final_table <- inner_join(x, y, by = "start")
+  final_table <- inner_join(x, y, by = "pos")
 
   final_table
 }
@@ -96,7 +96,7 @@ normalize_table <- function(path, table){
     dplyr::select(-count) %>%
     unique()
 
-  final_table <- inner_join(table, all_reads, by = c("cell", "virus", "time")) %>%
+  final_table <- left_join(table, all_reads, by = c("cell", "virus", "time")) %>%
     dplyr::mutate(norm_count = (count/total_umi_reads)*100) %>%
     dplyr::select(-chrom, -normalized_count, -total_umi_reads)
 
