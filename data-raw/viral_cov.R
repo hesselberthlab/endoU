@@ -14,3 +14,9 @@ viral_cov_tbl <- complete_table(viral_cov_tbl, dinuc_counts)
 viral_cov_tbl <- normalize_table(norm_tabs, viral_cov_tbl)
 
 usethis::use_data(viral_cov_tbl, compress = "xz", overwrite = TRUE)
+
+set.seed(42)
+viral_cov_small <- sample_n(viral_cov_tbl, size = 10000) %>%
+  arrange(cell, virus, time, start)
+
+usethis::use_data(viral_cov_small, compress = "xz", overwrite = TRUE)
