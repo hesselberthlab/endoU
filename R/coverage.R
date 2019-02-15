@@ -60,7 +60,7 @@ coverage_table <- function(filenames) {
 #' @export
 
 complete_table <- function(table, dinuc_path) {
-  x <- complete(table, cell, virus, time, start, fill = list(count = 1))
+  x <- complete(table, cell, virus, time, pos, fill = list(count = 1))
   y <- suppressMessages(readr::read_tsv(
     dinuc_path,
     col_names = c(
@@ -96,7 +96,7 @@ normalize_table <- function(path, table){
     dplyr::select(-count) %>%
     unique()
 
-  final_table <- left_join(table, all_reads, by = c("cell", "virus", "time")) %>%
+  final_table <- inner_join(table, all_reads, by = c("cell", "virus", "time")) %>%
     dplyr::mutate(norm_count = (count/total_umi_reads)*100) %>%
     dplyr::select(-chrom, -normalized_count, -total_umi_reads)
 
