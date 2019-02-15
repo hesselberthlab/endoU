@@ -19,7 +19,7 @@ read_file <- function(x) {
   tab <- suppressMessages(readr::read_tsv(
     x,
     col_names = c(
-      "chrom", "start", "count", "normalized_count"
+      "chrom", "pos", "count", "normalized_count"
     )
   ))
   tab$filename <- basename(x)
@@ -60,15 +60,15 @@ coverage_table <- function(filenames) {
 #' @export
 
 complete_table <- function(table, dinuc_path) {
-  x <- complete(table, cell, virus, time, start, fill = list(count = 1))
+  x <- complete(table, cell, virus, time, pos, fill = list(count = 1))
   y <- suppressMessages(readr::read_tsv(
     dinuc_path,
     col_names = c(
-      "start", "dinuc"
+      "pos", "dinuc"
     )
   ))
 
-  final_table <- inner_join(x, y, by = "start")
+  final_table <- inner_join(x, y, by = "pos")
 
   final_table
 }
