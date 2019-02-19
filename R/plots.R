@@ -19,11 +19,11 @@ plot_coverage <- function(data, x, y, cell = NULL, virus = NULL) {
   y <- enquo(y)
 
   if (!is.null(cell)) {
-    data <- filter(data, cell == cell)
+    data <- filter(data, cell == !!cell)
   }
 
   if (!is.null(virus)) {
-    data <- filter(data, virus == virus)
+    data <- filter(data, virus == !!virus)
   }
 
   ggplot(data, aes(x = !!x, y = !!y, fill = time, width = 25)) +
