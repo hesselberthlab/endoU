@@ -23,7 +23,7 @@ Plot coverage
 \examples{
 plot_coverage(
   viral_cov_small,
-  start, norm_count,
+  pos, norm_count,
   cell = "B6", virus = "ns2"
 )
 
