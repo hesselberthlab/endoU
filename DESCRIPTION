@@ -25,3 +25,6 @@ Imports:
     stringr,
     cowplot,
     DT
+Remotes:
+  clauswilke/colorblindr
+  

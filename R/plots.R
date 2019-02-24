@@ -31,14 +31,18 @@ plot_coverage <- function(data, x, y, cell = NULL, virus = NULL) {
 
   ggplot(data, aes(x = (!!x/1000), y = !!y, fill = time, width = 0.025)) +
     geom_bar(stat = "identity", position = "identity") +
-    scale_fill_brewer(palette = "Set1") +
+    scale_fill_OkabeIto() +
+    #scale_fill_brewer(palette = "Set1") +
     theme_cowplot() +
-    ggtitle(paste(cell, virus, sep="_")) +
-    scale_y_continuous(limits = c(0.0, 0.2)) +
+    ggtitle(paste(cell, virus, sep=" ")) +
+    scale_y_continuous(limits = c(0.0, 0.21)) +
     scale_x_continuous(breaks=seq(0, 30, 5)) +
     labs(
       x = "Position (kb)",
       y = "Normalized counts"
-    )
-
+    ) +
+    theme(
+      axis.title.x = element_text(size=11),
+      axis.title.y = element_text(size=11),
+      plot.title = element_text(size=12, face="bold", hjust=0))
 }

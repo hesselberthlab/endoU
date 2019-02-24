@@ -19,5 +19,6 @@
 #' @importFrom rlang parse_quosure is_character is_logical quo_text
 #' @importFrom rlang list2 .data :=
 #' @importFrom magrittr %>%
+#' @importFrom colorblindr scale_fill_OkabeIto scale_color_OkabeIto
 #'
 "_PACKAGE"
