@@ -4,7 +4,7 @@
 \alias{plot_coverage}
 \title{Plot coverage}
 \usage{
-plot_coverage(data, x, y, cell = NULL, virus = NULL)
+plot_coverage(data, x, y, cell = NULL, virus = NULL, facet = TRUE)
 }
 \arguments{
 \item{data}{table object with count and position data}
@@ -16,15 +16,17 @@ plot_coverage(data, x, y, cell = NULL, virus = NULL)
 \item{cell}{cell}
 
 \item{virus}{virus}
+
+\item{facet}{set to FALSE to generate graphs for a specifc cell and virus combination}
 }
 \description{
 Plot coverage
 }
 \examples{
-plot_coverage(
-  viral_cov_small,
-  pos, norm_count,
-  cell = "B6", virus = "ns2"
-)
+
+plot_coverage(viral_cov_small, pos, norm_count)
+
+plot_coverage(viral_cov_small, pos, norm_count, facet = FALSE, cell = "B6", virus = "ns2")
+
 
 }
