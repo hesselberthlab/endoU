@@ -14,7 +14,7 @@ Calculate dinucleotide frequencies observed from experimntal data
 }
 \examples{
 
-exp_freqs <- calc_freqs(viral_cov_tbl)
+obs_freqs <- calc_freqs(viral_cov_tbl)
 
 
 function to generate counts of dinucleotides per grouped library

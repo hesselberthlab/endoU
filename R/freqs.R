@@ -5,7 +5,7 @@
 #'
 #' @examples
 #'
-#' exp_freqs <- calc_freqs(viral_cov_tbl)
+#' obs_freqs <- calc_freqs(viral_cov_tbl)
 #'
 #'
 #' function to generate counts of dinucleotides per grouped library
@@ -56,31 +56,84 @@ calc_freqs <- function(x) {
 }
 
 
-#' Calculate enrichment and significance of dinucleotides captured in the
+#' Calculate enrichment of dinucleotides captured in the
 #' experimental data compared to prevalence of dinucelotide in RNA sequence of interest
 #'
 #' @param obs_freq table contianing dincucleotide frequencies for RNA sequence of interest
 #' @param exp_freq table containing dinucleotide frequencies calculated from experimental data
 #'
 #' @examples
-#' combined_freqs <- calc_freq_enrichment(mhv_freqs, exp_freqs)
+#' combined_freqs <- calc_freq_enrichment(mhv_freq, obs_freqs)
 #'
 #' @export
 #'
 
-calc_freq_enrichment <- function(observed_freq, experimental_freq) {
+calc_freq_enrichment <- function(expected_freq, observed_freq) {
 
-  #remove count column from observed frequencies table
-  obs_freqs <- observed_freq
+  #calculate frequency enrichment comparing observed to expected
 
-  #calculate frequency enrichment comparing experimental to observed
-  combined_freqs <- experimental_freq %>%
-    left_join(obs_freqs, by = "dinuc") %>%
+  combined_freqs <- observed_freq %>%
+    left_join(expected_freq, by = "dinuc") %>%
     mutate(log2_enrichment = log2(frequency.x/frequency.y))
 
   combined_freqs
 
 }
+
+#' Calculate significance of enrichment values comparing dinucleotides captured in the
+#' experimental data compared to prevalence of dinucelotide in RNA sequence of interest
+#'
+#' @param x table generated from calculating dinucelotide enrichment
+#'
+#'
+#' @examples
+#' cal_enrichment_sigs(combined_freqs)
+#'
+#'
+#'
+#' function to execute fisher exact test by row of dataframe comapring the odds ratio
+#' of obtaining a speciic dinucleotide in the expected data to the observed data
+
+fisher.byrow <- function(x) {
+  mx <- matrix(
+    c(
+      x$count.y,
+      (x$count_sum.y - x$count.y),
+      x$count.x,
+      (x$count_sum.x - x$count.x)),
+      2, 2
+  )
+
+  fisher.test(mx, alternative="less")$p.value
+}
+
+#' @export
+#'
+#'
+#'
+
+cal_enrichment_sigs <- function(x) {
+
+  ## turn counts data into lists
+
+  tbl <- x %>%
+    select(Group, dinuc, starts_with("count")) %>%
+    group_by(Group, dinuc) %>%
+    nest()
+
+  ## apply fisher test by row and join back with original data frame
+
+  tbl2 <- mutate(tbl, pval = map_dbl(tbl$data, fisher.byrow)) %>%
+          select(-data) %>%
+          left_join(x)
+
+  ## calculate qvals
+
+  res <- mutate(tbl2, qval = qvalue::qvalue(tbl2$pval, pi0 = 1)$qvalues)
+
+  res
+}
+
 
 
 #' Calculate percent of dinucloetide capture per total umi corrected reads in the library

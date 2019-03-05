@@ -2,10 +2,10 @@
 % Please edit documentation in R/freqs.R
 \name{calc_freq_enrichment}
 \alias{calc_freq_enrichment}
-\title{Calculate enrichment and significance of dinucleotides captured in the
+\title{Calculate enrichment of dinucleotides captured in the
 experimental data compared to prevalence of dinucelotide in RNA sequence of interest}
 \usage{
-calc_freq_enrichment(observed_freq, experimental_freq)
+calc_freq_enrichment(expected_freq, observed_freq)
 }
 \arguments{
 \item{obs_freq}{table contianing dincucleotide frequencies for RNA sequence of interest}
@@ -13,10 +13,10 @@ calc_freq_enrichment(observed_freq, experimental_freq)
 \item{exp_freq}{table containing dinucleotide frequencies calculated from experimental data}
 }
 \description{
-Calculate enrichment and significance of dinucleotides captured in the
+Calculate enrichment of dinucleotides captured in the
 experimental data compared to prevalence of dinucelotide in RNA sequence of interest
 }
 \examples{
-combined_freqs <- calc_freq_enrichment(mhv_freqs, exp_freqs)
+combined_freqs <- calc_freq_enrichment(mhv_freq, obs_freqs)
 
 }
