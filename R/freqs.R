@@ -20,7 +20,8 @@ frequencies <- function(x) {
   ## summarize the data by dinuc
   df <- aggregate(cbind(count) ~ dinuc, data = x, sum)
   df <- left_join(df_dinuc, df) %>%
-    mutate(frequency = count/sum(count))
+    mutate(frequency = count/sum(count)) %>%
+    mutate(count_sum = sum(count))
 }
 
 #'
@@ -62,7 +63,7 @@ calc_freqs <- function(x) {
 #' @param exp_freq table containing dinucleotide frequencies calculated from experimental data
 #'
 #' @examples
-#' combined_freqs <- calc_freqs_enrichment(mhv_freqs, exp_freqs)
+#' combined_freqs <- calc_freq_enrichment(mhv_freqs, exp_freqs)
 #'
 #' @export
 #'
@@ -70,8 +71,7 @@ calc_freqs <- function(x) {
 calc_freq_enrichment <- function(observed_freq, experimental_freq) {
 
   #remove count column from observed frequencies table
-  obs_freqs <- observed_freq %>%
-    select(-count)
+  obs_freqs <- observed_freq
 
   #calculate frequency enrichment comparing experimental to observed
   combined_freqs <- experimental_freq %>%

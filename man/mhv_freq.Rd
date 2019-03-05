@@ -4,7 +4,7 @@
 \name{mhv_freq}
 \alias{mhv_freq}
 \title{MHV background dinucleotide frequencies table}
-\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 16 rows and 3 columns.}
+\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 16 rows and 4 columns.}
 \usage{
 mhv_freq
 }

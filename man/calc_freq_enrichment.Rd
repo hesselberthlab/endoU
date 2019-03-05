@@ -17,6 +17,6 @@ Calculate enrichment and significance of dinucleotides captured in the
 experimental data compared to prevalence of dinucelotide in RNA sequence of interest
 }
 \examples{
-combined_freqs <- calc_freqs_enrichment(mhv_freqs, exp_freqs)
+combined_freqs <- calc_freq_enrichment(mhv_freqs, exp_freqs)
 
 }
