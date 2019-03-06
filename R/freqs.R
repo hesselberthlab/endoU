@@ -107,10 +107,14 @@ fisher.byrow <- function(x) {
   fisher.test(mx, alternative="less")$p.value
 }
 
+#'
+#' @importFrom qvalue qvalue
+#'
 #' @export
 #'
 #'
-#'
+
+usethis::use_package("qvalue")
 
 cal_enrichment_sigs <- function(x) {
 
@@ -133,7 +137,6 @@ cal_enrichment_sigs <- function(x) {
 
   res
 }
-
 
 
 #' Calculate percent of dinucloetide capture per total umi corrected reads in the library
@@ -166,4 +169,5 @@ calc_dinuc_percent <- function(filenames, table){
   res
 
 }
+
 
