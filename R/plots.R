@@ -99,3 +99,57 @@ plot_top_foldChange <- function(data, x, sample_comp = NULL, facet = TRUE) {
   p
 }
 
+#' Plot dinucleotides
+#'
+#' @param data table with percent dinucleotide data for cell, virus, and time
+#' @param facet set to FALSE to generate graphs for specifc fold change comparision
+#'
+#'
+#' @examples
+#'
+#' plot_dinuc(data)
+#' plot_dinu(data, "B6", "MHVV, facet = FALSE)
+#'
+#'
+#' @export
+#'
+#'
+
+
+plot_dinuc <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE) {
+  x <- enquo(x)
+  y <- enquo(y)
+
+  if (!is.null(cell)) {
+    data <- filter(data, cell == !!cell)
+  }
+
+  if (!is.null(virus)) {
+    data <- filter(data, virus == !!virus)
+  }
+
+  data <- data %>% mutate(time = fct_relevel(time, "9", "12"))
+
+  p <- ggplot(data, aes(x = !!x, y = !!y, fill = time)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    scale_fill_OkabeIto() +
+    theme_cowplot() +
+    ggtitle(paste(cell, virus, sep=" ")) +
+    scale_x_discrete(limits=c("UA","UG", "UC", "UU","GA", "GG", "GC", "GU", "CA", "CG", "CC", "CU", "AA", "AG", "AC", "AU")) +
+    labs(
+      x = "Dinucleotide",
+      y = "Percent total umi-reads"
+    ) +
+    theme(
+      axis.text.x = element_text(angle = 60, hjust = 1, size=8),
+      axis.title.x = element_text(size=11),
+      axis.title.y = element_text(size=11),
+      plot.title = element_text(size=12, face="bold", hjust=0))
+
+  if (facet) {
+    p <- p + facet_grid(virus ~ cell)
+  }
+
+  p
+}
+

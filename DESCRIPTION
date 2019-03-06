@@ -24,7 +24,7 @@ Imports:
     readr,
     stringr,
     cowplot,
-    DT
+    DT,
+    qvalue
 Remotes:
   clauswilke/colorblindr
-  
