@@ -146,7 +146,7 @@ cal_enrichment_sigs <- function(x) {
 #'
 #' @examples
 #'
-#' calc_dinuc_percent(filenames, combined_freqs)
+#' calc_dinuc_percent(filenames, obs_freqs)
 #'
 #' @export
 #'
@@ -163,11 +163,12 @@ calc_dinuc_percent <- function(filenames, table){
     unique()
 
   #calculate percent of reads captured at each dinucleotide
-  res <- left_join(combined_freqs, all_reads, by = c("cell", "virus", "time")) %>%
-    mutate(percent_reads = (count/total_umi_reads)*100)
+  res <- left_join(table, all_reads, by = c("cell", "virus", "time")) %>%
+    mutate(dinuc_percent_reads = (count/total_umi_reads)*100)
 
   res
 
 }
+
 
 
