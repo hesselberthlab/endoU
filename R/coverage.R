@@ -102,7 +102,3 @@ normalize_table <- function(path, table){
 
   final_table
 }
-
-
-
-

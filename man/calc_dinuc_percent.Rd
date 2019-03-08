@@ -16,6 +16,6 @@ Calculate percent of dinucloetide capture per total umi corrected reads in the l
 }
 \examples{
 
-calc_dinuc_percent(filenames, combined_freqs)
+calc_dinuc_percent(filenames, obs_freqs)
 
 }
