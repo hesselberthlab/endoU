@@ -141,7 +141,7 @@ plot_dinuc <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE) {
       y = "Percent total umi-reads"
     ) +
     theme(
-      axis.text.x = element_text(angle = 60, hjust = 1, size=8),
+      axis.text.x = element_text(angle = 60, hjust = 1, size=11),
       axis.title.x = element_text(size=11),
       axis.title.y = element_text(size=11),
       plot.title = element_text(size=12, face="bold", hjust=0))
@@ -151,5 +151,94 @@ plot_dinuc <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE) {
   }
 
   p
+}
+
+#' Plot RNA capture by cell
+#'
+#' @param data table with column data containing percent or total reads by RNA type
+#' @param y column name for RNA type of interest
+#'
+#'
+#' @examples
+#'
+#' plot_RNA_capture(table, RNA_col)
+#'
+#' @export
+#'
+#'
+
+plot_RNA_capture <- function(data, y) {
+
+    y <- enquo(y)
+
+    p <- ggplot(data, aes(x = virus , y = !!y, fill = time)) +
+    scale_fill_brewer(palette = 'Set1') +
+    geom_bar(stat = "identity", position = "dodge") +
+    scale_fill_OkabeIto() +
+    theme_cowplot() +
+    facet_grid( ~ cell) +
+    ggtitle(y) +
+    labs(
+      y = "Percent total umi-reads"
+    ) +
+      theme(
+        axis.text.x = element_text(angle = 60, hjust = 1, size=11),
+        axis.title.x = element_text(size=11),
+        axis.title.y = element_text(size=11),
+        plot.title = element_text(size=12, face="bold", hjust=0))
+}
+
+
+
+#' Plot RNA distribution by cell type
+#'
+#' @param data table with column data containing percent reads by RNA type
+#' @param time time hpi to filter on
+#' @param cols_plot column numbers identifying percent RNA captured for RNAs of interest
+#' @param cell set to null, can provide cell type of interest
+#' @param facet set to FALSE if providing specific cell type
+#'
+#'
+#' @examples
+#'
+#' plot_RNAbyCell(final_table, "RNaseL", "12", 13:20)
+#'
+#' plot_RNAbyCell(final_table, "12", 13:20)
+#'
+#' @export
+#'
+
+plot_RNAbyCell <- function(data, time, cols_plot, cell = NULL, facet = TRUE) {
+
+  if (!is.null(cell)) {
+    data <- filter(data, cell == !!cell)
+  }
+
+    data <- filter(data, time == !!time)
+
+    res <- data %>%
+      gather(RNA_type, percent_total_reads, cols_plot) %>%
+      separate(RNA_type, into = c('RNA_type'), sep = '_')
+
+    p <- ggplot(res, aes(x = RNA_type , y = percent_total_reads)) +
+      geom_bar(aes(fill = virus), stat = "identity", position = 'dodge') +
+      scale_fill_OkabeIto() +
+      theme_cowplot() +
+      ggtitle(paste(cell, paste(time, "hpi", sep = "_"), sep=" ")) +
+      labs(
+        y = "Percent total umi-reads"
+      ) +
+      theme(
+        axis.text.x = element_text(angle = 60, hjust = 1, size=11),
+        axis.title.x = element_text(size=11),
+        axis.title.y = element_text(size=11),
+        plot.title = element_text(size=12, face="bold", hjust=0))
+
+
+    if (facet) {
+      p <- p + facet_grid(~ cell)
+    }
+
+    p
 }
 
