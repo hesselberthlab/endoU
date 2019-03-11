@@ -22,7 +22,7 @@ Plot RNA distribution by cell type
 }
 \examples{
 
-plot_RNAbyCell(final_table, "RNaseL", "12", 13:20)
+plot_RNAbyCell(final_table, "12", 13:20, "B6", facet = FALSE)
 
 plot_RNAbyCell(final_table, "12", 13:20)
 

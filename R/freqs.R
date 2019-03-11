@@ -84,7 +84,7 @@ calc_freq_enrichment <- function(expected_freq, observed_freq) {
 #' experimental data compared to prevalence of dinucelotide in RNA sequence of interest
 #'
 #' @param x table generated from calculating dinucelotide enrichment
-#'
+#' x
 #'
 #' @examples
 #' cal_enrichment_sigs(combined_freqs)
@@ -108,11 +108,8 @@ fisher.byrow <- function(x) {
 }
 
 #'
-#' @importFrom qvalue qvalue
 #'
 #' @export
-#'
-#'
 
 cal_enrichment_sigs <- function(x) {
 

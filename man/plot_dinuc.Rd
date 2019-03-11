@@ -9,7 +9,7 @@ plot_dinuc(data, x, y, cell = NULL, virus = NULL, facet = TRUE)
 \arguments{
 \item{data}{table with percent dinucleotide data for cell, virus, and time}
 
-\item{facet}{set to FALSE to generate graphs for specifc fold change comparision}
+\item{facet}{set to FALSE to generate graphs for specifc comparisions}
 }
 \description{
 Plot dinucleotides

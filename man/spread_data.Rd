@@ -2,7 +2,7 @@
 % Please edit documentation in R/subtractive_analysis.R
 \name{spread_data}
 \alias{spread_data}
-\title{Normalize count data using the signal that occurs in the abscence of RNaseL}
+\title{Normalize count data using the signal that occurs in the abscence of RNaseL or nsp15}
 \usage{
 spread_data(viral_cov_tbl, key)
 }
@@ -10,13 +10,13 @@ spread_data(viral_cov_tbl, key)
 \item{data}{viral_cov_table}
 }
 \description{
-Normalize count data using the signal that occurs in the abscence of RNaseL
+Normalize count data using the signal that occurs in the abscence of RNaseL or nsp15
 }
 \examples{
 
 Spread the data by cell type or virus type and normalized count
 
-spread_data(viral_cov_table)
+spread_data(viral_cov_tbl, cell)
 
 
 }

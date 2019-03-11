@@ -8,7 +8,8 @@ experimental data compared to prevalence of dinucelotide in RNA sequence of inte
 fisher.byrow(x)
 }
 \arguments{
-\item{x}{table generated from calculating dinucelotide enrichment}
+\item{x}{table generated from calculating dinucelotide enrichment
+x}
 }
 \description{
 Calculate significance of enrichment values comparing dinucleotides captured in the
