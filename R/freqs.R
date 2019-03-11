@@ -114,8 +114,6 @@ fisher.byrow <- function(x) {
 #'
 #'
 
-usethis::use_package("qvalue")
-
 cal_enrichment_sigs <- function(x) {
 
   ## turn counts data into lists
@@ -138,6 +136,7 @@ cal_enrichment_sigs <- function(x) {
   res
 }
 
+usethis::use_package("qvalue")
 
 #' Calculate percent of dinucloetide capture per total umi corrected reads in the library
 #'

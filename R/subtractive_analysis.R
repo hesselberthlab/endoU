@@ -1,4 +1,4 @@
-#' Normalize count data using the signal that occurs in the abscence of RNaseL
+#' Normalize count data using the signal that occurs in the abscence of RNaseL or nsp15
 #'
 #' @param data viral_cov_table
 #'
@@ -6,7 +6,7 @@
 #'
 #' Spread the data by cell type or virus type and normalized count
 #'
-#' spread_data(viral_cov_table)
+#' spread_data(viral_cov_tbl, cell)
 #'
 #'
 #' @export

@@ -85,7 +85,7 @@ plot_top_foldChange <- function(data, x, sample_comp = NULL, facet = TRUE) {
     ggtitle(paste(sample_comp)) +
     #geom_hline(yintercept = 0) +
     labs(
-      y = "log2 fold change (WT/endoU mutant)"
+      y = "log2 fold change (WT/mutant)"
     ) +
     theme(
       axis.title.x = element_text(size=11),
@@ -102,7 +102,7 @@ plot_top_foldChange <- function(data, x, sample_comp = NULL, facet = TRUE) {
 #' Plot dinucleotides
 #'
 #' @param data table with percent dinucleotide data for cell, virus, and time
-#' @param facet set to FALSE to generate graphs for specifc fold change comparision
+#' @param facet set to FALSE to generate graphs for specifc comparisions
 #'
 #'
 #' @examples
@@ -201,7 +201,7 @@ plot_RNA_capture <- function(data, y) {
 #'
 #' @examples
 #'
-#' plot_RNAbyCell(final_table, "RNaseL", "12", 13:20)
+#' plot_RNAbyCell(final_table, "12", 13:20, "B6", facet = FALSE)
 #'
 #' plot_RNAbyCell(final_table, "12", 13:20)
 #'
