@@ -1,0 +1,16 @@
+library(endoU)
+library(tidyverse)
+library(fs)
+library(usethis)
+
+basedir <- "~/Dropbox (Hesselberth Lab)/Rachel_data/EndoU_project"
+
+r18S_tabs <- fs::path_join(c(basedir, "18S/exp1/new"))
+norm_tabs <- fs::path_join(c(basedir, "all_RNA_bg/exp_1"))
+dinuc_counts <- fs::path_join(c(basedir, "dinuc_byposition/18S_dinuc.txt"))
+
+r18S_cov_tbl <- coverage_table(list_names(r18S_tabs))
+r18S_cov_tbl <- complete_table(r18S_cov_tbl, dinuc_counts)
+r18S_cov_tbl <- normalize_table(norm_tabs, r18S_cov_tbl)
+
+usethis::use_data(r18S_cov_tbl, compress = "xz", overwrite = TRUE)
