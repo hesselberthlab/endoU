@@ -4,6 +4,9 @@
 #' Viral coverage table - small version
 "viral_cov_small"
 
+#' Viral coverage table - without pseudo-counts for dinuc analysis
+"viral_cov_freq"
+
 #' MHV background dinucleotide frequencies table
 "mhv_freq"
 

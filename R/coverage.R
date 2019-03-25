@@ -73,6 +73,29 @@ complete_table <- function(table, dinuc_path) {
   final_table
 }
 
+#' For generating a position table without pseudo-counts
+#'
+#' @examples
+#' only_dinuc_complete(table, dinuc_path)
+#'
+#'
+#' @export
+
+only_dinuc_complete <- function(table, dinuc_path) {
+  x <- table
+  y <- suppressMessages(readr::read_tsv(
+    dinuc_path,
+    col_names = c(
+      "pos", "dinuc"
+    )
+  ))
+
+  final_table <- inner_join(x, y, by = "pos")
+
+  final_table
+
+}
+
 #' Normalize coverage table using the sum of aligned reads per library
 #' @param x path to depth files containing all aligned reads in each libary
 #' @param y complete table with position and count data for specific RNA of interest

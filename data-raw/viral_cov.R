@@ -20,3 +20,9 @@ viral_cov_small <- sample_n(viral_cov_tbl, size = 10000) %>%
   arrange(cell, virus, time, pos)
 
 usethis::use_data(viral_cov_small, compress = "xz", overwrite = TRUE)
+
+viral_cov_freq <- coverage_table(list_names(viral_tabs))
+viral_cov_freq <- only_dinuc_complete(viral_cov_freq, dinuc_counts)
+viral_cov_freq <- normalize_table(norm_tabs, viral_cov_freq)
+
+usethis::use_data(viral_cov_freq, compress = "xz", overwrite = TRUE)
