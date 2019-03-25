@@ -96,6 +96,7 @@ only_dinuc_complete <- function(table, dinuc_path) {
 
 }
 
+
 #' Normalize coverage table using the sum of aligned reads per library
 #' @param x path to depth files containing all aligned reads in each libary
 #' @param y complete table with position and count data for specific RNA of interest
