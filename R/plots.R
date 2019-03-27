@@ -75,7 +75,7 @@ plot_top_foldChange <- function(data, x, sample_comp = NULL, facet = TRUE) {
 
   p <- ggplot(data, aes(x = (!!x), y = (-foldChange), color=factor(!!x))) +
     geom_quasirandom() +
-    scale_color_endoU("general") +
+    scale_color_endoU("cool") +
     theme_cowplot() +
     ggtitle(paste(sample_comp)) +
     labs(
@@ -201,7 +201,7 @@ plot_RNAbyCell <- function(data, time, cols_plot, cell = NULL, facet = TRUE) {
 
     p <- ggplot(res, aes(x = RNA_type , y = percent_total_reads)) +
       geom_bar(aes(fill = virus), stat = "identity", position = 'dodge') +
-      scale_fill_endoU("general") +
+      scale_fill_endoU("cool") +
       theme_cowplot() +
       ggtitle(paste(cell, paste(time, "hpi", sep = "_"), sep=" ")) +
       labs(
@@ -253,9 +253,9 @@ endoU_cols <- function(...) {
 endoU_palettes <- list(
   `time`  = endoU_cols("orange", "sky blue"),
 
-  `cool`  = endoU_cols("sky blue", "bluish green", "blue"),
+  `cool`  = endoU_cols("dark grey", "bluish green", "yellow", "blue", "vermillion"),
 
-  `hot`   = endoU_cols("yellow", "orange", "vermillion, reddish purple"),
+  `hot`   = endoU_cols("yellow", "vermillion", "reddish purple"),
 
   `all` = endoU_cols("black", "orange", "sky blue", "bluish green", "yellow", "blue", "vermillion", "reddish purple", "dark grey"),
 

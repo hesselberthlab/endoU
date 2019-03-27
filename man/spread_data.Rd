@@ -4,9 +4,11 @@
 \alias{spread_data}
 \title{Normalize count data using the signal that occurs in the abscence of RNaseL or nsp15}
 \usage{
-spread_data(viral_cov_tbl, key)
+spread_data(table, key)
 }
 \arguments{
+\item{key}{variable to spread data based on}
+
 \item{data}{viral_cov_table}
 }
 \description{

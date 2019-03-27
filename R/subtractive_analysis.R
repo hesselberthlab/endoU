@@ -1,7 +1,7 @@
 #' Normalize count data using the signal that occurs in the abscence of RNaseL or nsp15
 #'
 #' @param data viral_cov_table
-#'
+#' @param key variable to spread data based on
 #' @examples
 #'
 #' Spread the data by cell type or virus type and normalized count
@@ -12,9 +12,9 @@
 #' @export
 #'
 
-spread_data <- function(viral_cov_tbl, key) {
+spread_data <- function(table, key) {
   key <- enquo(key)
-  res <-  dplyr::select(viral_cov_tbl, -count, -dinuc) %>%
+  res <-  dplyr::select(table, -count, -dinuc) %>%
     spread(!!key, norm_count)
   res[is.na(res)] <- 0
 
