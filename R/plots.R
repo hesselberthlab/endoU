@@ -124,7 +124,7 @@ plot_dinuc <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE) {
     scale_fill_endoU("time") +
     theme_cowplot() +
     ggtitle(paste(cell, virus, sep=" ")) +
-    scale_x_discrete(limits=c("UA","UG", "UC", "UU","GA", "GG", "GC", "GU", "CA", "CG", "CC", "CU", "AA", "AG", "AC", "AU")) +
+    scale_x_discrete(limits=c("UA","UU", "UG", "UC","GA", "GU", "GG", "GC", "CA", "CU", "CG", "CC", "AA", "AU", "AG", "AC")) +
     labs(
       x = "Dinucleotide",
       y = "Percent total umi-reads"
