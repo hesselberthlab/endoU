@@ -49,6 +49,60 @@ plot_coverage <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE) {
   p
 }
 
+#' Plot coverage region
+#'
+#' @param data table object with count and position data
+#' @param x variable for x-axis
+#' @param y variable for y-axis
+#' @param cell cell
+#' @param virus virus
+#' @param facet set to FALSE to generate graphs for a specifc cell and virus combination
+#' @param start position to start plot region
+#' @param stop position to end plot region
+#'
+#'
+#'
+#' @examples
+#'
+#' plot_cov_reg(viral_cov_small, pos, norm_count, 1800, 2000)
+#'
+#' plot_cov_reg(viral_cov_small, pos, norm_count, facet = FALSE, cell = "B6", virus = "ns2", 1800, 2000)
+#'
+#'
+#' @export
+
+plot_cov_reg <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE, start, stop) {
+  x <- enquo(x)
+  y <- enquo(y)
+
+  if (!is.null(cell)) {
+    data <- dplyr::filter(data, cell == !!cell)
+  }
+
+  if (!is.null(virus)) {
+    data <- dplyr::filter(data, virus == !!virus)
+  }
+
+  data <- data %>% dplyr::mutate(time = fct_relevel(time, "9", "12"))
+
+  p <- ggplot(data, aes(x = !!x, y = !!y, fill = time, width = 0.025)) +
+    geom_bar(stat = "identity", position = "identity") +
+    scale_fill_endoU("time") +
+    theme_cowplot() +
+    ggtitle(paste(cell, virus, sep=" ")) +
+    xlim(start, stop)
+    labs(
+      x = "Position (kb)",
+      y = "Normalized counts"
+    )
+
+  if (facet) {
+    p <- p + facet_grid(virus ~ cell)
+  }
+
+  p
+}
+
 
 #' Plot fold change
 #'
