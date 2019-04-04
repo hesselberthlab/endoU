@@ -66,12 +66,12 @@ plot_coverage <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE) {
 #'
 #' plot_cov_reg(viral_cov_small, pos, norm_count, 1800, 2000)
 #'
-#' plot_cov_reg(viral_cov_small, pos, norm_count, facet = FALSE, cell = "B6", virus = "ns2", 1800, 2000)
+#' plot_cov_reg(viral_cov_small, pos, norm_count, facet = FALSE, cell = "B6", virus = "ns2", start = 1800, end = 2000, col_width = 0.5)
 #'
 #'
 #' @export
 
-plot_cov_reg <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE, start, stop) {
+plot_cov_reg <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE, start, stop, col_width) {
   x <- enquo(x)
   y <- enquo(y)
 
@@ -85,12 +85,12 @@ plot_cov_reg <- function(data, x, y, cell = NULL, virus = NULL, facet = TRUE, st
 
   data <- data %>% dplyr::mutate(time = fct_relevel(time, "9", "12"))
 
-  p <- ggplot(data, aes(x = !!x, y = !!y, fill = time, width = 0.025)) +
+  p <- ggplot(data, aes(x = !!x, y = !!y, fill = time, width = col_width)) +
     geom_bar(stat = "identity", position = "identity") +
     scale_fill_endoU("time") +
     theme_cowplot() +
     ggtitle(paste(cell, virus, sep=" ")) +
-    xlim(start, stop)
+    xlim(start, stop) +
     labs(
       x = "Position (kb)",
       y = "Normalized counts"
@@ -128,7 +128,7 @@ plot_top_foldChange <- function(data, x, sample_comp = NULL, facet = TRUE) {
   }
 
   p <- ggplot(data, aes(x = (!!x), y = (-foldChange), color=factor(!!x))) +
-    geom_quasirandom() +
+    geom_quasirandom(groupOnX=TRUE/FALSE) +
     scale_color_endoU("cool") +
     theme_cowplot() +
     ggtitle(paste(sample_comp)) +
@@ -142,6 +142,7 @@ plot_top_foldChange <- function(data, x, sample_comp = NULL, facet = TRUE) {
 
   p
 }
+
 
 #' Plot dinucleotides
 #'
