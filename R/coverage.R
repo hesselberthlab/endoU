@@ -12,7 +12,6 @@ list_names <- function(path) {
   names <- list.files(path, full.names = TRUE)
 }
 
-
 #' Function to read in position and count data
 
 read_file <- function(x) {
@@ -60,7 +59,7 @@ coverage_table <- function(filenames) {
 #' @export
 
 complete_table <- function(table, dinuc_path) {
-  x <- complete(table, cell, virus, time, pos, fill = list(count = 1))
+  x <- mutate(table, count=replace(count, count==0, 1))
   y <- suppressMessages(readr::read_tsv(
     dinuc_path,
     col_names = c(

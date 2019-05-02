@@ -4,7 +4,7 @@
 \name{viral_cov_freq}
 \alias{viral_cov_freq}
 \title{Viral coverage table - without pseudo-counts for dinuc analysis}
-\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 370161 rows and 7 columns.}
+\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 658497 rows and 7 columns.}
 \usage{
 viral_cov_freq
 }
