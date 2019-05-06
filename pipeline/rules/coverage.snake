@@ -93,7 +93,7 @@ rule coverage:
     """
     bedtools genomecov \
         -5 \
-        -bg \
+        -d \
         -g \
         -{CHROM_SIZES} \
         -ibam {input} \
@@ -116,7 +116,7 @@ rule mhv_coverage_pos:
     """
     bedtools genomecov \
         -5 \
-        -bg \
+        -d \
         -g \
         -{CHROM_SIZES} \
         -ibam {input} \
@@ -140,7 +140,7 @@ rule mhv_coverage_neg:
     """
     bedtools genomecov \
         -5 \
-        -bg \
+        -d \
         -g \
         -{CHROM_SIZES} \
         -ibam {input} \

@@ -22,3 +22,4 @@ rule split:
     "python3 split_bedgraph.py {input} {params.outdir}"
 
  
+

@@ -20,7 +20,7 @@ rule normalize:
     """
     awk \
         -v total=$(samtools view -c -F4 {input.count}) \
-        '{{print$0"\t"($4/total)*100}}' {input.nocount} \
+        '{{print$0"\t"($3/total)*100}}' {input.nocount} \
         > {output}
     """
 
@@ -41,7 +41,7 @@ rule mhv_normalize_pos:
     """
     awk \
         -v total=$(samtools view -c -F4 {input.count}) \
-        '{{print$0"\t"($4/total)*100}}' {input.nocount} \
+        '{{print$0"\t"($3/total)*100}}' {input.nocount} \
         > {output}
     """
 
@@ -62,7 +62,7 @@ rule mhv_normalize_neg:
     """
     awk \
         -v total=$(samtools view -c -F4 {input.count}) \
-        '{{print$0"\t"($4/total)*100}}' {input.nocount} \
+        '{{print$0"\t"($3/total)*100}}' {input.nocount} \
         > {output}
     """
 

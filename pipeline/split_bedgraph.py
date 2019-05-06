@@ -18,14 +18,14 @@ for chrom in chrom_names:
 
 for line in open(sys.argv[1]):
 
-    chrom, start, end, count, normalized_count = line.split("\t")
+    chrom, start, count, normalized_count = line.split("\t")
     #print(fields)
     file_chrom = chrom.split("|")[0]
     #chrom, start, end, count, normalized_count = fields[0:5]
     # look up the output file by chrom name
     output = outputs[file_chrom]
     
-    output.write(chrom + "\t" +  start + "\t" +  end + "\t" + count + "\t" + normalized_count)
+    output.write(chrom + "\t" +  start + "\t" +  count + "\t" + normalized_count)
     #print(chrom, start, end,count, normalized_count,
           #sep = "\t", file=output)
 
