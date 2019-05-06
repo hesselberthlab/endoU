@@ -4,7 +4,7 @@
 \name{r18S_cov_tbl}
 \alias{r18S_cov_tbl}
 \title{18S coverage table}
-\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 65091 rows and 7 columns.}
+\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 67320 rows and 7 columns.}
 \usage{
 r18S_cov_tbl
 }
