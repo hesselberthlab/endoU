@@ -59,7 +59,7 @@ coverage_table <- function(filenames) {
 #' @export
 
 complete_table <- function(table, dinuc_path) {
-  x <- mutate(table, count=replace(count, count==0, 1))
+  x <- complete(table, cell, virus, time, pos, fill = list(count = 1))
   y <- suppressMessages(readr::read_tsv(
     dinuc_path,
     col_names = c(
@@ -81,7 +81,7 @@ complete_table <- function(table, dinuc_path) {
 #' @export
 
 only_dinuc_complete <- function(table, dinuc_path) {
-  x <- table
+  x <- complete(table, cell, virus, time, pos, fill = list(count = 0))
   y <- suppressMessages(readr::read_tsv(
     dinuc_path,
     col_names = c(
@@ -92,6 +92,22 @@ only_dinuc_complete <- function(table, dinuc_path) {
   final_table <- inner_join(x, y, by = "pos")
 
   final_table
+
+}
+
+
+#' For generating a position table without dinucleotides
+#'
+#' @examples
+#' no_dinuc_complete(table)
+#'
+#'
+#' @export
+
+no_dinuc_complete <- function(table) {
+  x <- complete(table, cell, virus, time, pos, fill = list(count = 0))
+
+  x
 
 }
 
@@ -108,16 +124,9 @@ only_dinuc_complete <- function(table, dinuc_path) {
 #'
 #' @export
 
-normalize_table <- function(path, table){
+normalize_table <- function(library_sizes, table){
 
-  filenames <- list_names(path)
-
-  all_reads <- coverage_table(filenames) %>%
-    dplyr::select(count, cell, virus, time) %>%
-    dplyr::group_by(cell, virus, time) %>%
-    dplyr::mutate(total_umi_reads = sum(count)) %>%
-    dplyr::select(-count) %>%
-    unique()
+  all_reads <- library_sizes
 
   final_table <- inner_join(table, all_reads, by = c("cell", "virus", "time")) %>%
     dplyr::mutate(norm_count = (count/total_umi_reads)*100) %>%
@@ -125,3 +134,32 @@ normalize_table <- function(path, table){
 
   final_table
 }
+
+
+#' Normalize coverage table for multi-chrom data using the sum of aligned reads per library
+#' @param x path to depth files containing all aligned reads in each libary
+#' @param y complete table with position and count data for specific RNA of interest
+#' @return table with position, count, normalized count, and dinucleotide data
+#'
+#'
+#' @examples
+#' complete_table(path, table)
+#'
+#'
+#' @export
+
+chrom_normalize_table <- function(library_sizes, table){
+
+  all_reads <- library_sizes
+
+  final_table <- inner_join(table, all_reads, by = c("cell", "virus", "time")) %>%
+    dplyr::mutate(norm_count = (count/total_umi_reads)*100) %>%
+    dplyr::select(-normalized_count, -total_umi_reads)
+
+  final_table
+}
+
+
+
+
+
