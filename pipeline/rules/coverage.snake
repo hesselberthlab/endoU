@@ -97,8 +97,29 @@ rule coverage:
         -g \
         -{CHROM_SIZES} \
         -ibam {input} \
-        > {output}
+        | awk -F '\t' '$3 != 0' \
+        > {output} 
     """
+    
+#rule filter_cov: 
+  #input:
+   # "results/bedgraph/{sample}.bg"
+  #output:
+  #   "results/bedgraph/{sample}.bg"
+ # params:
+  #  job_name = "filter_cov",
+  #  memory = "select[mem>30] rusage[mem=30]",
+ # log: 
+  #  "results/log/bedgraph/{sample}.txt"
+ # threads:12
+
+ # shell:
+  #  """
+   # awk \
+    #    -v 'BEGIN{{FS="\t"; OFS="\t"}} ($3 != 0)' \
+     #   '{{ print $1,$2,$3 }}' {output} \
+      #  > {output}
+   # """
 
 rule mhv_coverage_pos:
   input:
@@ -121,7 +142,9 @@ rule mhv_coverage_pos:
         -{CHROM_SIZES} \
         -ibam {input} \
         -strand "+" \
+        | awk -F '\t' '$3 != 0' \
         > {output}
+
     """
 
 rule mhv_coverage_neg:
@@ -145,8 +168,11 @@ rule mhv_coverage_neg:
         -{CHROM_SIZES} \
         -ibam {input} \
         -strand "-" \
+        | awk -F '\t' '$3 != 0' \
         > {output}
+
     """
+
 
 
 
