@@ -4,7 +4,7 @@
 \name{viral_cov_tbl}
 \alias{viral_cov_tbl}
 \title{Viral coverage table}
-\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 370161 rows and 7 columns.}
+\format{An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 1102428 rows and 7 columns.}
 \usage{
 viral_cov_tbl
 }
