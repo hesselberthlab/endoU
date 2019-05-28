@@ -25,6 +25,9 @@
 #' Viral coverage table +2 +3 posisitions
 "viral_cov_tbl3"
 
+#' Viral coverage table with single nucleotide positions
+"viral_cov_nuc"
+
 #' MHV background dinucleotide frequencies table
 "mhv_freq"
 

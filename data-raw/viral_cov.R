@@ -42,7 +42,6 @@ viral_cov_nuc <- coverage_table(list_names(viral_tabs))
 viral_cov_nuc <- complete_table(viral_cov_nuc, single_nuc_positions)
 viral_cov_nuc <- normalize_table(library_sizes, viral_cov_nuc)
 
-
 usethis::use_data(viral_cov_tbl, compress = "xz", overwrite = TRUE)
 usethis::use_data(viral_cov_tbl1, compress = "xz", overwrite = TRUE)
 usethis::use_data(viral_cov_tbl2, compress = "xz", overwrite = TRUE)
