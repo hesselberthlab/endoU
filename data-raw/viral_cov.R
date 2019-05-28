@@ -10,6 +10,8 @@ dinuc_positions <- fs::path_join(c(basedir, "dinuc_byposition/mhv.dinuc.antisens
 dinuc_positions_1 <- fs::path_join(c(basedir, "dinuc_byposition/mhv.dinuc.antisense_+1.txt"))
 dinuc_positions_2 <- fs::path_join(c(basedir, "dinuc_byposition/mhv.dinuc.antisense_+2.txt"))
 dinuc_positions_3 <- fs::path_join(c(basedir, "dinuc_byposition/mhv.dinuc.antisense_+3.txt"))
+single_nuc_positions <- fs::path_join(c(basedir, "dinuc_byposition/mhv.nuc.antisense.txt"))
+
 
 filenames <- list_names(norm_tabs)
 
@@ -36,12 +38,16 @@ viral_cov_tbl3 <- coverage_table(list_names(viral_tabs))
 viral_cov_tbl3 <- complete_table(viral_cov_tbl3, dinuc_positions_3)
 viral_cov_tbl3 <- normalize_table(library_sizes, viral_cov_tbl3)
 
+viral_cov_nuc <- coverage_table(list_names(viral_tabs))
+viral_cov_nuc <- complete_table(viral_cov_nuc, single_nuc_positions)
+viral_cov_nuc <- normalize_table(library_sizes, viral_cov_nuc)
+
 
 usethis::use_data(viral_cov_tbl, compress = "xz", overwrite = TRUE)
 usethis::use_data(viral_cov_tbl1, compress = "xz", overwrite = TRUE)
 usethis::use_data(viral_cov_tbl2, compress = "xz", overwrite = TRUE)
 usethis::use_data(viral_cov_tbl3, compress = "xz", overwrite = TRUE)
-
+usethis::use_data(viral_cov_nuc, compress = "xz", overwrite = TRUE)
 
 set.seed(42)
 viral_cov_small <- dplyr::sample_n(viral_cov_tbl, size = 10000) %>%
