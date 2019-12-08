@@ -4,7 +4,7 @@ library(fs)
 library(usethis)
 
 basedir <- "~/Dropbox (Hesselberth Lab)/Rachel_data/EndoU_project"
-norm_tabs <- fs::path_join(c(basedir, "all_RNA_bg/exp_1"))
+norm_tabs <- fs::path_join(c(basedir, "all_RNA_bg/exp_2"))
 
 filenames <- list_names(norm_tabs)
 
@@ -18,8 +18,8 @@ library_sizes <- coverage_table(filenames) %>%
 usethis::use_data(library_sizes, compress = "xz", overwrite = TRUE)
 
 basedir <- "~/Dropbox (Hesselberth Lab)/Rachel_data/EndoU_project"
-norm_tabs <- fs::path_join(c(basedir, "all_RNA_bg/exp_1"))
+norm_tabs <- fs::path_join(c(basedir, "all_RNA_bg/exp_2"))
 
-all_reads <- sum_all_reads(filenames)
+all_reads_exp2 <- sum_all_reads(filenames)
 
-usethis::use_data(all_reads, compress = "xz", overwrite = TRUE)
+usethis::use_data(all_reads_exp2, compress = "xz", overwrite = TRUE)
