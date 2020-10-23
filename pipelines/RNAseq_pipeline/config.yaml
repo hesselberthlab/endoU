@@ -1,0 +1,110 @@
+# Config file for general RNA-seq quantification snakemake pipeline
+
+# List of samples to process
+# Supply the basename of the fastq except for the fq_suffix refion defined in 
+# the PE or SE config. Note that this defaults to anything in the raw_data
+# directory.
+SAMPLES:
+    - "B6_MHVS_12_rep1"
+    - "B6_MHVS_12_rep2"
+    - "B6_MHVS_9_rep1"
+    - "B6_MHVS_9_rep2"
+    - "B6_MHVV_12_rep1"
+    - "B6_MHVV_9_rep1"
+    - "B6_mock_12_rep1"
+    - "B6_mock_12_rep2"
+    - "B6_mock_9_rep1"
+    - "B6_mock_9_rep2"
+    - "B6_ns2_12_rep1"
+    - "B6_ns2_12_rep2"
+    - "B6_ns2_9_rep1"
+    - "B6_ns2_9_rep2"
+    - "B6_nsp15_12_rep1"
+    - "B6_nsp15_12_rep2"
+    - "B6_nsp15_9_rep1"
+    - "B6_nsp15_9_rep2"
+    - "IFNAR_MHVS_12_rep1"
+    - "IFNAR_MHVS_9_rep1"
+    - "IFNAR_MHVV_12_rep1"
+    - "IFNAR_MHVV_9_rep1"
+    - "IFNAR_mock_12_rep1"
+    - "IFNAR_mock_9_rep1"
+    - "IFNAR_ns2_12_rep1"
+    - "IFNAR_ns2_9_rep1"
+    - "IFNAR_nsp15_12_rep1"
+    - "IFNAR_nsp15_9_rep1"
+    - "RNaseL_MHVS_12_rep1"
+    - "RNaseL_MHVS_12_rep2"
+    - "RNaseL_MHVS_9_rep1"
+    - "RNaseL_MHVS_9_rep2"
+    - "RNaseL_MHVV_12_rep1"
+    - "RNaseL_MHVV_9_rep1"
+    - "RNaseL_mock_12_rep1"
+    - "RNaseL_mock_12_rep2"
+    - "RNaseL_mock_9_rep1"
+    - "RNaseL_mock_9_rep2"
+    - "RNaseL_ns2_12_rep1"
+    - "RNaseL_ns2_12_rep2"
+    - "RNaseL_ns2_9_rep1"
+    - "RNaseL_ns2_9_rep2"
+    - "RNaseL_nsp15_12_rep1"
+    - "RNaseL_nsp15_12_rep2"
+    - "RNaseL_nsp15_9_rep1"
+    - "RNaseL_nsp15_9_rep2"
+
+
+
+# Supply either "PE" for paired-end or "SE" for single end
+LIBTYPE:
+    "PE"
+
+# Directory containing fastqs
+RAW_DATA:
+    "/beevol/home/ancarr/projects/endoU_working/2019-05-29/data/RNAseq"
+
+# Chromosome sizes
+#CHROM_SIZES:
+    #"/beevol/home/rbilab/ref/genome/mouse/GRCm38/Mus_musculus.GRCm38.dna.primary_assembly.UCSC.fa.fai"
+
+# gtf file containing mouse/mhv combined transcript annotations
+GTF:
+    "/beevol/home/ancarr/data-sets/genome/combined_genomes/mhv_mouse/mouse_mhv.gtf"
+
+# gtf file containing transcript annotations for mouse only
+GTF_MM10:
+    "/beevol/home/ancarr/data-sets/genome/mm10/Mus_musculus.GRCm38.85.gtf"
+
+# Path to star index directory
+STAR_IDX:
+    "/beevol/home/ancarr/data-sets/genome/combined_genomes/mhv_mouse/STARidx/"
+
+# Path to salmon index for mouse only
+SALMON_IDX:
+    "/beevol/home/ancarr/data-sets/genome/mm10/salmon_index/"
+
+# Sandbox directory
+#SANDBOX:
+    #"sheridanr@amc-sandbox:/data/home/sheridanr/public_html/Rachel_RNAseq"
+
+# Parameters for various commands
+# Note that the first entry in fq_suffix is assumed to be read 1.
+PE:
+    cutadapt:      " -m 20 -a 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCA' -A 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT' "
+    featureCounts: " --extraAttributes 'gene_name,gene_biotype' -s 1 -p -B "
+    rMATS:         " -t paired --readLength 110 --cstat 0.0001 "  # cstat default is 0.0001
+    majiq:         "readlen=151"
+    salmon_quant:  " --validateMappings --libType 'ISR' --numBootstraps 50 "
+    fq_suffix:
+        - "_R1_001.fastq.gz"
+        - "_R2_001.fastq.gz"
+
+SE:
+    cutadapt:      " -m 20 -a 'AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC' "
+    featureCounts: " --extraAttributes 'gene_name,gene_biotype' -s 1 "
+    rMATS:         " -t single --readLength 30 --cstat 0.0001 "  # cstat default is 0.0001
+    majiq:         "readlen=51"
+    salmon_quant:  " --validateMappings --fldMean 200 --fldSD 20 --libType 'SR' --numBootstraps 50 "
+    fq_suffix:
+        - "_R1_001.fastq.gz"
+
+

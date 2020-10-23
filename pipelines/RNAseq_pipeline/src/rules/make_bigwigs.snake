@@ -1,0 +1,138 @@
+
+""" Rules to generate bigwigs """
+
+# Create bigwigs from bedgraphs
+rule make_bigwigs:
+    input:
+        F_bg   = "results/{sample}/star/{sample}_Signal.Unique.str1.out.bg",
+        R_bg   = "results/{sample}/star/{sample}_Signal.Unique.str2.out.bg",
+        chroms = {CHROM_SIZES}
+    output:
+        F_bg  = "results/{sample}/{sample}_F.bg",
+        R_bg  = "results/{sample}/{sample}_R.bg",
+        F_bw  = "results/{sample}/{sample}_F.bw",
+        R_bw  = "results/{sample}/{sample}_R.bw",
+        R_neg = "results/{sample}/{sample}_neg_R.bw"
+    params:
+        job_name = "{sample}_bigwig",
+        memory   = "select[mem>4] rusage[mem=4]"
+    log:
+        "logs/bigwigs/{sample}_bigwig" 
+    message:
+        "Creating bigwigs for {wildcards.sample}"
+    shell:
+        """
+        # Function to create bigwigs
+        create_bw() {{
+            local in_bg=$1
+            local chroms=$2
+            local out_bg=$3
+            local out_bw=$4
+
+            # Sort bedgraphs
+            bedtools sort \
+                -i $in_bg \
+                | awk '{{$1 = "chr"$1; print}}' \
+                > $out_bg
+
+            # Create bigwigs
+            bedGraphToBigWig \
+                $out_bg \
+                $chroms \
+                $out_bw
+        }}
+
+        create_bw \
+            {input.F_bg} \
+            {input.chroms} \
+            {output.F_bg} \
+            {output.F_bw}
+
+        create_bw \
+            {input.R_bg} \
+            {input.chroms} \
+            {output.R_bg} \
+            {output.R_bw}
+
+        # Create bigwigs for negative signal
+        cat {output.R_bg} \
+            | awk '{{$4 = $4 * -1; print}}' \
+            > {output.R_bg}.tmp
+    
+        bedGraphToBigWig \
+            {output.R_bg}.tmp \
+            {input.chroms} \
+            {output.R_neg}
+
+        rm {output.R_bg}.tmp
+        """
+
+
+# Create URLs
+rule create_URLs:
+    input:
+        F_bw = "results/{sample}/{sample}_F.bw",
+        R_bw = "results/{sample}/{sample}_R.bw",
+        bam  = "results/bams/{sample}_Aligned.sortedByCoord.out.bam"
+    output:
+        UCSC = "results/{sample}/{sample}_UCSC.txt",
+        IGV  = "results/{sample}/{sample}_IGV.txt"
+    params:
+        job_name = "{sample}_URLs",
+        memory   = "select[mem>4] rusage[mem=4]",
+        sandbox  = SANDBOX
+    threads:
+        1
+    log:
+        "logs/bigwigs/{sample}_URLs"
+    message:
+        "Creating URLs for {wildcards.sample}"
+    shell:
+        """
+        # Create ssh paths
+        sandbox={params.sandbox}
+        sand_ssh=$(echo $sandbox | cut -d ":" -f 1)
+
+        proj=$(basename $sandbox)
+        user=$(basename `ssh $sand_ssh readlink public_html`)
+
+        URL=http://amc-sandbox.ucdenver.edu/$user/$proj/data
+
+        # Transfer data to sandbox
+        sandbox=$sandbox/data
+        sand_dir=$(echo $sandbox | cut -d ":" -f 2)
+
+        ssh $sand_ssh \
+            mkdir -p $sand_dir
+
+        scp {input.F_bw} $sandbox
+        scp {input.R_bw} $sandbox
+        #scp {input.bam}* $sandbox
+
+        ssh $sand_ssh \
+            chmod 644 $sand_dir/{wildcards.sample}*
+
+        # Create UCSC genome browser URLs
+        F_name=$(basename {input.F_bw})
+        R_name=$(basename {input.R_bw})
+
+        echo -e \
+            track type=bigWig \
+            name=\"$F_name\" \
+            description=\"$F_name\" \
+            bigDataUrl=$URL/$F_name \
+            "\n"track type=bigWig name=\"$R_name\" \
+            description=\"$R_name\" \
+            bigDataUrl=$URL/$R_name \
+            > {output.UCSC}
+
+        # Create IGV browser URLs
+        bam_URL=$URL/$(basename {input.bam})
+
+        echo -e \
+            $bam_URL \
+            "\n"$bam_URL.bai \
+            > {output.IGV}
+        """
+
+

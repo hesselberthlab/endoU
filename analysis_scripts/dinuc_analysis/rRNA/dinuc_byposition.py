@@ -4,7 +4,6 @@ import sys
 import Bio
 
 #A program to report the 3'dinucleotide for each 5' position in a bedgraph
-#for the antisense strand (MHV genomic RNA)
 
 #specify fasta file on command line
 fasta = file(sys.argv[1])
@@ -34,6 +33,6 @@ for line in (bedgraph):
     position = int(start) - 1
 
     #slice 1 bp upstream and downstream of start
-    dinuc = seq[position+1:position+3]    
+    dinuc = seq[position-1:position+1]    
     print chrom, '\t', start, '\t', count, '\t', dinuc
 

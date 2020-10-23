@@ -1,0 +1,85 @@
+
+from os import path
+from glob import glob
+from collections import OrderedDict
+import sys
+
+
+configfile: "config.yaml"
+
+# Configure shell for all rules
+shell.executable("/bin/bash")
+shell.prefix("set -o nounset -o pipefail -o errexit -x; ")
+
+
+# Parameters from config yaml
+#SAMPLES = config["SAMPLES"]
+#COMPARISONS = config["COMPARISONS"]
+RAW_DATA = config["RAW_DATA"]
+#CHROM_SIZES = config["CHROM_SIZES"]
+GTF = config["GTF"]
+GTF_MM10 = config["GTF_MM10"]
+STAR_IDX = config["STAR_IDX"]
+SALMON_IDX = config["SALMON_IDX"]
+SAMPLES = config["SAMPLES"]
+
+# Set up library types
+if config["LIBTYPE"] == "PE":
+    PAIRED_END = True
+    CMD_PARAMS = config["PE"]
+
+elif config["LIBTYPE"] == "SE":
+    PAIRED_END = False
+    CMD_PARAMS = config["SE"]
+
+else:
+    sys.exit("LIBTYPE needs to be either 'PE' or 'SE'") 
+
+
+# Find sample ids from fastqs if not in config
+if not SAMPLES:
+    SAMPLES = glob(path.join(RAW_DATA, "*[gz|fastq|fq]"))
+
+    for fq_suffix in CMD_PARAMS["fq_suffix"]:
+        SAMPLES = [path.basename(x).replace(fq_suffix, "") for x in SAMPLES]
+        SAMPLES = list(set(SAMPLES))
+
+
+# Final output files
+rule all:
+    input: 
+        # FastQC output
+        "results/fastqc/fastqc_summary.tsv",
+
+        # STAR output
+        "results/star_summary.tsv",
+
+        # SALMON output
+        expand(
+            "results/salmon/{sample}/quant.sf",
+            sample = SAMPLES),
+        
+        # BigWig output
+        #expand(
+            #"results/{sample}/{sample}_UCSC.txt",
+            #sample = SAMPLES
+        #),
+        #expand(
+            #"results/{sample}/{sample}_IGV.txt",
+            #sample = SAMPLES
+        #),
+
+        # featureCounts output
+        "results/counts/feature_counts.tsv",
+        "results/counts/degust_counts.tsv"
+
+
+# Snakes to run
+include: "src/rules/fastqc.snake"
+include: "src/rules/cutadapt.snake"
+include: "src/rules/star.snake"
+include: "src/rules/salmon.snake"
+#include: "src/rules/make_bigwigs.snake"
+include: "src/rules/featureCounts.snake"
+
+

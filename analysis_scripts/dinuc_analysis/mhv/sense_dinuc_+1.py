@@ -3,29 +3,26 @@
 import sys
 import Bio
 
-#A program to report the 3'dinucleotide for each 5' position in a depth
-#file for the sense strand (MHV antigenomic RNA)
+#A program to report the 3'dinucleotide for each 5' position in a bedgraph
+#for the MHV genomic RNA -1:+1 register
 
 #specify fasta file on command line
 fasta = file(sys.argv[1])
 
-#read in and parse fasta file, transcribe and reverse complement, then
-#reverse again to get the complement
+#read in and parse fasta file and "transcribe"
 
 from Bio import SeqIO
 for record in SeqIO.parse(fasta, "fasta"):
         #rev_seq = seq[::-1]
-        seq = record.seq.reverse_complement().transcribe()
-        #seq = record.seq.transcribe()
-        rev_seq = seq[::-1]
-        #print(rev_seq)
+        #seq = record.seq.reverse_complement()
+        seq = record.seq.transcribe()
         #seq = seq[::-1]
 
 #specify bedgraph file on the command line
 bedgraph = file(sys.argv[2])
 
 #open and parse bedgraph file by line, remove whitespace and split fields
-#into strings, name the fields, use the start position to slice
+#into strings, name the fields, use the start position to slice from
 #sequence for the dinucleotide 
 
 for line in (bedgraph):
@@ -37,6 +34,6 @@ for line in (bedgraph):
     position = int(start) - 1
 
     #slice 1 bp upstream and downstream of start
-    dinuc = rev_seq[position-1:position+1]    
+    dinuc = seq[position:position+2]    
     print chrom, '\t', start, '\t', count, '\t', dinuc
 

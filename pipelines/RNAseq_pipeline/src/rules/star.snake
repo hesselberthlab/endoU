@@ -1,0 +1,160 @@
+
+""" Rules for aligning reads with STAR """
+
+# Generate fastq names
+def _star_fqs(wildcards):
+    if PAIRED_END: 
+        fq_names = [
+            path.join(
+                "results", "trimmed_fastq",
+                wildcards.sample + "_" + R + "_trim.fastq.gz"
+            ) for R in ["R1", "R2"]
+        ]
+
+    else:
+        fq_names = [
+            path.join(
+                "results", "trimmed_fastq",
+                wildcards.sample + "_trim.fastq.gz"
+            )
+        ]
+
+    return fq_names
+
+
+# Align reads using STAR 2.5.2a
+rule star_align:
+    input:
+        _star_fqs,
+    output:
+        bam = "results/bams/{sample}_Aligned.sortedByCoord.out.bam",
+        #bg1 = "results/{sample}/star/{sample}_Signal.Unique.str1.out.bg",
+        #bg2 = "results/{sample}/star/{sample}_Signal.Unique.str2.out.bg",
+        log = "results/star/{sample}/{sample}_Log.final.out"
+    params:
+        job_name = "{sample}_star",
+        memory   = "select[mem>100] rusage[mem=100]",
+        gtf      = GTF,
+        out      = "results/star/{sample}/{sample}_"
+    log:
+        "logs/star/{sample}_star"
+    message:
+        "Aligning reads for {wildcards.sample}"
+    threads:
+        6 
+    shell:
+        """
+        STAR \
+            --readFilesIn {input} \
+            --genomeDir {STAR_IDX} \
+            --sjdbGTFfile {params.gtf} \
+            --outFileNamePrefix {params.out} \
+            --runThreadN {threads} \
+            --outSAMtype BAM Unsorted \
+            --readFilesCommand zcat \
+            --outFilterMultimapNmax 10 \
+            --outFilterMismatchNmax 10 \
+            --outFilterMismatchNoverReadLmax 0.04 \
+            --outSAMmultNmax 1 \
+            --outMultimapperOrder Random \
+            --outSAMattributes All \
+            --outSAMattrIHstart 0
+
+
+        samtools sort {params.out}Aligned.out.bam -o {params.out}Aligned.sortedByCoord.out.bam
+
+        samtools index {params.out}Aligned.sortedByCoord.out.bam
+
+        mv {params.out}Aligned.sortedByCoord.out.bam* results/bams/
+
+        """
+
+
+#--outBAMsortingThreadN {threads} \
+#--outWigType bedGraph \
+#--outWigNorm RPM \
+
+# Create STAR alignment summary
+rule star_summary:
+    input:
+        expand(
+            "results/star/{sample}/{sample}_Log.final.out",
+            sample = SAMPLES
+        )
+    output:
+        "results/star_summary.tsv"
+    params:
+        job_name = "star_summary",
+        memory   = "select[mem>4] rusage[mem=4]"
+    log:
+        "logs/star/summary"
+    message:
+        "Creating STAR alignment summary"
+    threads:
+        1
+    shell:
+        """
+        for file in {input}; 
+        do 
+            awk -v FS="\t" -v OFS="\t" '(NR > 5 && $1 !~ "READS:") {{
+                gsub("\\\\|", ""); 
+                print $0, FILENAME
+            }}' $file \
+                >> {output}
+        done
+        """
+
+
+
+### OUTPUT OPTIONS
+### --outSAMtype SAM: Type of SAM output, SAM/BAM 
+# Unsorted/SortedByCoordinate.
+### --outWigType None: Type of signal output.
+### --outWigNorm RPM: Type of normalization for the signal.
+
+### SAM OUTPUT OPTIONS
+### --outSAMmode Full: Mode of SAM output. Full, full SAM output.
+### --outSAMmultNmax -1: Max number of multiple alignments for a read
+# that will be output to theSAM/BAM files. -1, output all alignments.
+### --outSAMattributes Standard: A string of desired SAM attributes,
+# in the order desired for the output. Standard, NH HI AS nM; All,
+# NH HI AS nM NM MD jM jI.
+### --outSAMattrIHstart 1: Start value for the IH attribute. 0 may be
+# required by some downstream software, such as Cufflinks or
+# StringTie.
+### --outSAMstrandField None: Cufflinks-like strand field flag. 
+# intronMotif, strand derived from the intron motif. Reads with
+# inconsistent and/or non-canonical introns are filtered out.
+### --outSAMprimaryFlag OneBestScore: Which alignments are considered
+# primary - all others will be markedwith 0x100 bit in the FLAG.
+# OneBestScore, only one alignment is primary; AllBestScore, all
+# alignments with the best score are primary.
+
+### ALIGNMENT OPTIONS
+### --alignIntronMin 20: Minimum intron length.
+### --alignIntronMax 1000000: Maximum intron length.
+### --alignMatesGapMax 0: Maximum gap between two mates. 0, 
+# (2^winBinNbits)*winAnchorDistNbins).
+### --alignSJoverhangMin 8: Minimum overhang for unannotated junctions.
+### --alignSJDBoverhangMin 1: Minimum overhang for annotated junctions.
+### --sjdbScore 2: Extra alignment score for alignmets that cross 
+# database junctions.
+### --limitSjdbInsertNsj 1000000: Maximum number of junction to be
+# inserted to the genome on the fly at the mapping stage, including
+# those from annotations and those detected in the 1st step of the
+# 2-pass run.
+
+### FILTERING OPTIONS
+### --outFilterMultimapNmax 10: Maximum number of loci the read is
+# allowed to map to.
+### --outFilterMismatchNmax 10: Maximum number of mismatches per pair.
+### --outFilterMismatchNoverReadLmax 1.0: Alignment will be output only
+# if its ratio of mismatches to read length is less than or equal
+# to this value.
+### --outFilterType Normal: Type of filtering. Normal, standard
+# filtering using only current alignment.
+### --outMultimapperOrder Random: Order of multimapping alignments in
+# the output files.
+
+
+

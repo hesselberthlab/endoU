@@ -1,0 +1,185 @@
+
+""" Rules for running rMATS """
+
+# Function to retrieve bam files for comparisons
+def _get_bams(wildcards):
+    comparison = wildcards.comparison.split("-")
+    bam_list = []
+
+    # glob does not match with regex, it supports ranges and the
+    # wildcards, "*" and "?"
+    for sample in comparison:
+
+        # If a "." is present in the sample name, this indicates the
+        # position of the replicate number 
+        bam_name = re.sub("\.", "[0-9]", sample)
+        bams     = glob("results/bams/" + bam_name + "*_Aligned.sortedByCoord.out.bam")
+        bam_str  = ""
+
+        for bam in bams:
+            bam_str += bam + ","
+
+        bam_str = bam_str.strip(",$")
+        bam_list.append(sample)
+        bam_list.append(bam_str)
+
+    # Return list containing the name and bam path for each sample
+    return(bam_list)
+
+
+# Run rMATS
+rule rMATS:
+    input:
+        expand(
+            "results/bams/{sample}_Aligned.sortedByCoord.out.bam",
+            sample = SAMPLES
+        )
+    output:
+        "results/rMATS/{comparison}/{comparison}_URLs.txt"
+    params:
+        job_name = "rMATS",
+        memory   = "select[mem>12] rusage[mem=12]",
+        bams     = _get_bams,
+        gtf      = GTF,
+        out      = "results/rMATS/{comparison}",
+        opts     = CMD_PARAMS["rMATS"],
+        sandbox  = SANDBOX
+    threads:
+        5
+    log:
+        "logs/rMATS/{comparison}_rMATS"
+    message:
+        "Running rMATS for {wildcards.comparison}"
+    shell:
+        """
+        # Path to rMATS
+        rMATS=/cluster/software/modules-sw/rMATS/4.0.1/rMATS-turbo-Linux-UCS2/rmats.py
+
+        # Create config files containing the bam paths for each sample
+        comparison={wildcards.comparison}
+        config=results/rMATS/$comparison/sample
+
+        echo {params.bams[1]} \
+            > $config\_1.tsv
+
+        echo {params.bams[3]} \
+            > $config\_2.tsv
+        
+        # Run rMATS
+        python $rMATS \
+            --b1 $config\_1.tsv \
+            --b2 $config\_2.tsv \
+            --gtf {params.gtf} \
+            --od {params.out} \
+            --nthread {threads} \
+            --tstat {threads} \
+            {params.opts}
+
+        # Transfer rMATS results to sandbox
+        sandbox={params.sandbox}
+        sand_ssh=$(echo $sandbox | cut -d ":" -f 1)
+        sand_dir=$(echo $sandbox | cut -d ":" -f 2)
+        
+        ssh $sand_ssh mkdir -p $sand_dir/rMATS/$comparison
+        scp {params.out}/*.MATS.JCEC.txt $sandbox/rMATS/$comparison
+        ssh $sand_ssh chmod -R 755 $sand_dir/rMATS
+        ssh $sand_ssh chmod 644 $sand_dir/rMATS/$comparison/*
+
+        # Create URLs
+        proj=$(basename $sandbox)
+        user=$(basename `ssh $sand_ssh readlink public_html`)
+        URL=http://amc-sandbox.ucdenver.edu/$user/$proj/rMATS
+
+        echo -e $URL \
+            > {output}
+        """
+
+
+# Create rMATS summary
+rule rMATS_summary:
+    input:
+        expand(
+            "results/rMATS/{comparison}/{comparison}_URLs.txt",
+            comparison = COMPARISONS
+        )
+    output:
+        "results/rMATS/rMATS_summary.tsv"
+    params:
+        job_name = "rMATS_summary",
+        memory   = "select[mem>4] rusage[mem=4]",
+        pval     = 0.05,
+        sandbox  = SANDBOX
+    log:
+        "logs/rMATS/summary"
+    message:
+        "Creating rMATS summary"
+    threads:
+        1
+    shell:
+        """
+        # Merge and filter rMATS output files 
+        for file in results/rMATS/*/*.MATS.JCEC.txt
+        do
+            # Extract sample names from file path
+            # If a "." is in sample name this indicates the position of the
+            # replicate number, need to remove these for summary files
+            name=$(echo $file | sed 's/results\/rMATS\///g')
+            key=$(echo $name | cut -d "/" -f 1)
+            key=$(
+                echo $key \
+                    | sed 's/\\.//g' \
+                    | sed 's/__/_/g'
+            )
+
+            # Extract event names from file path
+            event=$(echo $name | cut -d "/" -f 2)
+            event=$(basename -s .MATS.JCEC.txt `echo $event`)
+
+            # Columns to select from output files
+            pcol=PValue
+            dcol=IncLevelDifference
+                
+            # Select pcol and dcol and print first line
+            cat $file \
+                | awk -v OFS="\t" \
+                    -v key=$key -v event=$event \
+                    -v pcol=$pcol -v dcol=$dcol \
+                    '(NR == 1) {{
+                        for (i = 1; i <= NF; i++) {{
+                            if ($i == pcol) {{
+                                p = i
+                            }} else if ($i == dcol) {{
+                                d = i
+                            }}
+                        }};
+                        print $1, $2, $3, $p, $d, "key", "event"
+
+                    # Print remaining lines
+                    }} (NR > 1) {{
+                        print $1, $2, $3, $p, $d, key, event
+                    }}' \
+                    >> rMATS.1.tmp
+        done
+
+        # Set column names and filter by p-value
+        cat rMATS.1.tmp \
+            | awk '(($1 !~ "^ID" && $4 < {params.pval}) || NR == 1) {{
+                gsub("\\"", ""); print
+            }}' \
+            | sort -k4,4g \
+            > rMATS.2.tmp
+
+        rm rMATS.1.tmp
+
+        # Transfer rMATS summary to sandbox
+        sandbox={params.sandbox}
+        sand_ssh=$(echo $sandbox | cut -d ":" -f 1)
+        sand_dir=$(echo $sandbox | cut -d ":" -f 2)
+
+        scp rMATS.2.tmp $sandbox/rMATS/rMATS_summary.tsv
+        ssh $sand_ssh chmod 644 $sand_dir/rMATS/rMATS_summary.tsv
+        
+        mv rMATS.2.tmp {output}
+        """
+
+

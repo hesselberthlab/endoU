@@ -1,0 +1,83 @@
+
+""" Rules to count reads overlapping genes """
+
+# Run featureCounts
+rule counts:
+    input:
+        expand(
+            "results/bams/{sample}_Aligned.sortedByCoord.out.bam",
+            sample = SAMPLES
+        )
+    output:
+        "results/counts/feature_counts.tsv"
+    params:
+        job_name = "counts",
+        memory   = "select[mem>40] rusage[mem=40]",
+        opts     = CMD_PARAMS["featureCounts"],
+        gtf      = GTF 
+    log:
+        "logs/counts/featureCounts"
+    message:
+        "Counting reads with featureCounts"
+    threads:
+        16
+    shell:
+        """
+        featureCounts \
+            {params.opts} \
+            -F GTF \
+            -a {params.gtf} \
+            -o {output} \
+            -T {threads} \
+            {input}
+        """
+
+
+# Format featureCounts output for degust
+# Remove head and rename colnames for easy loading into degust.
+rule degust_counts:
+    input: 
+        "results/counts/feature_counts.tsv"
+    output:
+        "results/counts/degust_counts.tsv"
+    params:
+        job_name = "degust",
+        memory   = "select[mem>4] rusage[mem=4]"
+    log:
+        "logs/counts/degust"
+    message:
+        "Formatting counts table"
+    run:
+        out = open(output[0], "w")
+
+        with open(input[0], "r") as counts:     
+
+            # Header
+            header = counts.readline()
+      
+            # Column name
+            cols = counts.readline().rstrip()
+            cols = cols.split("\t") 
+      
+            renamed_cols = []
+            
+            # Remove paths and trim column names
+            for column in cols:
+                if "_Aligned.sortedByCoord.out.bam" in column:
+                    bam_id    = os.path.basename(column)
+                    sample_id = bam_id.replace("_Aligned.sortedByCoord.out.bam", "")
+
+                    renamed_cols.append(sample_id)
+
+                else:
+                    renamed_cols.append(column)
+      
+            # Write new column names
+            out.write("%s\n" % "\t".join(renamed_cols))
+
+            for line in counts:
+                out.write("%s" % line)
+
+        out.close() 
+
+

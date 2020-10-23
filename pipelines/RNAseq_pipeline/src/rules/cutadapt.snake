@@ -1,0 +1,77 @@
+
+""" Rules for trimming reads with cutadapt """
+
+# Generate fastq names
+def _fq_types(wildcards):
+    fq_suffixes = CMD_PARAMS["fq_suffix"]
+    fq_names    = [path.join(RAW_DATA, wildcards.sample + x) for x in fq_suffixes]
+
+    return fq_names
+
+
+# Run cutadapt for single-end reads
+rule cutadapt_single:
+    input:
+        _fq_types
+    output:
+        "results/trimmed_fastq/{sample}_trim.fastq.gz"
+    params:
+        job_name = "{sample}_cutadapt",
+        memory   = "select[mem>4] rusage[mem=4]",
+        settings = CMD_PARAMS["cutadapt"]
+    log:
+        "logs/cutadapt/{sample}_cutadapt"
+    message:
+        "Trimming illumina adapters for {wildcards.sample}" 
+    threads:
+        1
+    run:
+        # If no params are passed, make a symlink to original fastq
+        if len(params.settings) is 0:
+            os.symlink(input[0], output[0])
+        else:
+            shell(
+                """
+                cutadapt \
+                    {params.settings} \
+                    -o {output} \
+                    {input[0]} 
+                """
+            )
+
+
+# Run cutadapt for paired-end reads
+rule cutadapt_paired:
+    input:
+        _fq_types
+    output:
+        "results/trimmed_fastq/{sample}_R1_trim.fastq.gz",
+        "results/trimmed_fastq/{sample}_R2_trim.fastq.gz"
+    params:
+        job_name = "{sample}_cutadapt",
+        memory   = "select[mem>4] rusage[mem=4]",
+        settings = CMD_PARAMS["cutadapt"]
+    log:
+        "logs/cutadapt/{sample}_cutadapt"
+    message:
+        "Trimming illumina adapters for {wildcards.sample}" 
+    threads:
+        1
+    run:
+        # If no params are passed, make a symlink to original fastq
+        if len(params.settings) is 0:
+            os.symlink(input[0], output[0])
+            os.symlink(input[1], output[1])
+        else:
+            shell(
+                """
+                cutadapt \
+                    {params.settings} \
+                    -o {output[0]} \
+                    -p {output[1]} \
+                    {input[0]}  \
+                    {input[1]}
+                """
+            )
+
+

@@ -4,7 +4,7 @@ import sys
 import Bio
 
 #A program to report the 3'dinucleotide for each 5' position in a bedgraph
-#for the antisense strand (MHV genomic RNA)
+#for the MHV genomic RNA +2:+3 register 
 
 #specify fasta file on command line
 fasta = file(sys.argv[1])

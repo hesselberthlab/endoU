@@ -1,0 +1,370 @@
+
+""" Rules for running Majiq """
+
+# Function to retrieve bam files for comparisons
+def _get_bams(wildcards):
+    comparison = wildcards.comparison.split("-")
+    bam_list = []
+
+    # glob does not match with regex, it supports ranges and the
+    # wildcards, "*" and "?"
+    for sample in comparison:
+
+        # If a "." is present in the sample name, this indicates the
+        # position of the replicate number 
+        bam_name = re.sub("\.", "[0-9]", sample)
+        bams     = glob("results/bams/" + bam_name + "*_Aligned.sortedByCoord.out.bam")
+        bam_str  = ""
+
+        for bam in bams:
+            bam_str += bam + ","
+
+        bam_str = bam_str.strip(",$")
+        bam_list.append(sample)
+        bam_list.append(bam_str)
+
+    # Return list containing the name and bam path for each sample
+    return(bam_list)
+
+
+# Function to strip paths from bams
+def _get_bam_names(wildcards):
+    bam_list = _get_bams(wildcards)
+
+    for i, paths in enumerate(bam_list):
+        paths = paths.split(",")
+        bam_str = ""
+
+        for bam in paths:
+            # Use os.path.isfile() to only modify the paths in bam_list
+            if os.path.isfile(bam):
+                bam = os.path.splitext(os.path.basename(bam))[0]
+
+            bam_str += bam + ","
+
+        # Remove extra comma
+        bam_str = bam_str.strip(",$")
+
+        # Add bam string to bam_list
+        bam_list[i] = bam_str
+
+    return(bam_list)
+
+
+# Run Majiq build
+rule majiq_build:
+    input:
+        expand(
+            "results/bams/{sample}_Aligned.sortedByCoord.out.bam",
+            sample = SAMPLES
+        )
+    output:
+        "results/majiq/{comparison}/build/majiq.log"
+    params:
+        job_name = "build",
+        memory   = "select[mem>16] rusage[mem=16]",
+        bams     = _get_bam_names,
+        gff3     = GFF3,
+        genome   = STAR_IDX,
+        opts     = CMD_PARAMS["majiq"],
+        config   = "results/majiq/{comparison}/config.majiq",
+        out      = "results/majiq/{comparison}"
+    threads:
+        12
+    message:
+        "Building Majiq index for {wildcards.comparison}"
+    log:
+        "logs/majiq/{comparison}_build"
+    shell:
+        """
+        # To run Majiq install locally using pip3 install --user
+        # git+https://bitbucket.org/biociphers/majiq_stable.git#egg=majiq
+        # python 3.6.7
+        # pip3
+        # drmaa
+        # cython
+        # pysam
+        # numpy
+
+        # Directories
+        build_dir={params.out}/build/
+        genome=$(basename {params.genome})
+
+        # Create majiq config file
+        mkdir -p {params.out}
+
+        echo -e \
+            [info] \
+            "\n"{params.opts} \
+            "\n"samdir=results/bams/ \
+            "\n"genome=$genome \
+            "\n\n"[experiments] \
+            > {params.config}
+
+        echo "{params.bams[0]}={params.bams[1]}" \
+            >> {params.config}
+
+        echo "{params.bams[2]}={params.bams[3]}" \
+            >> {params.config}
+
+        # Majiq build
+        majiq build \
+            {params.gff3} \
+            -c {params.config} \
+            -j {threads} \
+            -o $build_dir
+        """
+
+
+# Run Majiq psi
+rule majiq_psi:
+    input:
+        "results/majiq/{comparison}/build/majiq.log"
+    output:
+        "results/majiq/{comparison}/psi/{comparison}_URLs.txt"
+    params:
+        job_name = "psi",
+        memory   = "select[mem>16] rusage[mem=16]",
+        bams     = _get_bam_names,
+        out      = "results/majiq/{comparison}",
+        sandbox  = SANDBOX
+    threads:
+        12
+    log:
+        "logs/majiq/{comparison}_psi"
+    message:
+        "Performing PSI analysis for {wildcards.comparison}"
+    shell:
+        """
+        # Directories
+        build_dir={params.out}/build
+        psi_dir={params.out}/psi
+
+        # Sandbox directories
+        sandbox={params.sandbox}
+        sand_ssh=$(echo $sandbox | cut -d ":" -f 1)
+        sand_dir=$(echo $sandbox | cut -d ":" -f 2)
+
+        # Function to run psi analysis
+        run_psi() {{
+            sample=$1
+            out_name=$2
+
+            # Results from majiq build
+            # If a "." is in sample name this indicates the position of the
+            # replicate number, need to replace this with "*" for matching
+            build_name=$(echo $sample | sed 's/\\./*/g')
+            build_res=$build_dir/$build_name*.majiq
+
+            # Splicegraph required for voila
+            graph=$build_dir/splicegraph.sql
+
+            # Output directories
+            psi_res=$psi_dir/$sample.psi.voila
+            voila_res=$psi_dir/$out_name\_voila
+
+            # Run psi
+            majiq psi \
+                $build_res \
+                -j {threads} \
+                -n $sample \
+                -o $psi_dir
+
+            # Run voila
+            voila psi \
+                $psi_res \
+                -s $graph \
+                -o $voila_res
+       
+            # Transfer results to sandbox
+            ssh $sand_ssh mkdir -p $sand_dir/majiq
+            scp -r $voila_res $sandbox/majiq
+            ssh $sand_ssh chmod -R 755 $sand_dir/majiq
+        }}
+
+        # If a "." is in sample name this indicates the position of the
+        # replicate number, need to remove this for voila names
+        shorten_name() {{
+            echo $1 \
+                | sed 's/\\.//g' \
+                | sed 's/__/_/g'
+        }}
+        voila_name_1=$(shorten_name {params.bams[0]})
+        voila_name_2=$(shorten_name {params.bams[2]})
+
+        # Run psi analysis
+        run_psi {params.bams[0]} $voila_name_1
+        run_psi {params.bams[2]} $voila_name_2
+
+        # Create URLs
+        proj=$(basename $sandbox)
+        user=$(basename `ssh $sand_ssh readlink public_html`)
+        URL=http://amc-sandbox.ucdenver.edu/$user/$proj/majiq
+
+        echo -e \
+            $URL/$voila_name_1\_voila"\n" \
+            $URL/$voila_name_2\_voila \
+            > {output}
+        """
+
+
+# Run Majiq deltapsi
+rule majiq_deltapsi:
+    input:
+        "results/majiq/{comparison}/psi/{comparison}_URLs.txt"
+    output:
+        "results/majiq/{comparison}/deltapsi/{comparison}_URLs.txt"
+    params:
+        job_name = "deltapsi",
+        memory   = "select[mem>12] rusage[mem=12]",
+        bams     = _get_bam_names,
+        tsv_cpp  = "src/Cpp/parse_majiq_tsv",
+        out      = "results/majiq/{comparison}",
+        sandbox  = SANDBOX
+    threads:
+        12
+    log:
+        "logs/majiq/{comparison}_deltapsi"
+    message:
+        "Performing delta PSI analysis for {wildcards.comparison}"
+    shell:
+        """
+        # Function to create paths for build files
+        # If a "." is in sample name this indicates the position of the
+        # replicate number, need to replace this with "*" for matching
+        build_dir={params.out}/build
+
+        get_build_files() {{
+            name=$(echo $1 | sed 's/\\./*/g')
+
+            echo $build_dir/$name*.majiq
+        }}
+
+        # Run deltapsi
+        build_1=$(get_build_files {params.bams[0]})
+        build_2=$(get_build_files {params.bams[2]})
+        dpsi_dir={params.out}/deltapsi
+
+        majiq deltapsi \
+            -grp1 $build_1 \
+            -grp2 $build_2 \
+            -j {threads} \
+            -n {params.bams[0]} {params.bams[2]} \
+            -o $dpsi_dir
+
+        # Create names for voila directories
+        # If a "." is in sample name this indicates the position of the
+        # replicate number, need to remove this for output names
+        voila_name=$(
+            echo {wildcards.comparison} \
+                | sed 's/\\.//g' \
+                | sed 's/__/_/g'
+        )
+
+        # Run voila
+        dpsi_name={params.bams[0]}_{params.bams[2]}
+        dpsi_res=$dpsi_dir/$dpsi_name.deltapsi.voila
+        graph=$build_dir/splicegraph.sql
+        voila_res=$dpsi_dir/$voila_name\_voila
+
+        voila deltapsi \
+            $dpsi_res \
+            -s $graph \
+            -o $voila_res
+
+        # Create sorted tables from voila results
+        # This adds an unintentional blank 9th column
+        tsv=$voila_res/$dpsi_name.deltapsi.tsv
+        tsv_out={params.out}/$voila_name.sort.tsv
+
+        {params.tsv_cpp} $tsv \
+            | sort -k8,8gr \
+            > $tsv_out
+
+        header=$(awk '$1 ~ "^#"' $tsv_out)
+        sed -i '/^#Gene Name/d' $tsv_out
+        sed -i "1i$header" $tsv_out  # Need double quotes to use variable with sed
+
+        # Transfer voila results to sandbox
+        sandbox={params.sandbox}
+        sand_ssh=$(echo $sandbox | cut -d ":" -f 1)
+        sand_dir=$(echo $sandbox | cut -d ":" -f 2)
+        
+        ssh $sand_ssh mkdir -p $sand_dir/majiq
+        scp -r $voila_res $sandbox/majiq
+
+        # Create URLs
+        proj=$(basename $sandbox)
+        user=$(basename `ssh $sand_ssh readlink public_html`)
+        URL=http://amc-sandbox.ucdenver.edu/$user/$proj/majiq
+
+        echo -e $URL/$voila_name\_voila \
+            > {output}
+        """
+
+
+# Create Majiq summary
+rule majiq_summary:
+    input:
+        expand(
+            "results/majiq/{comparison}/deltapsi/{comparison}_URLs.txt",
+            comparison = COMPARISONS
+        )
+    output:
+        "results/majiq/majiq_summary.tsv"
+    params:
+        job_name = "majiq_summary",
+        memory   = "select[mem>4] rusage[mem=4]",
+        sandbox  = SANDBOX
+    log:
+        "logs/majiq/summary"
+    message:
+        "Creating Majiq summary"
+    threads:
+        1
+    shell:
+        """
+        # Merge voila tables
+        # There is a blank 9th column in the .sort.tsv files
+        for file in results/majiq/*/*.sort.tsv
+        do
+            # Format comparison name
+            # If a "." is in sample name this indicates the position of the
+            # replicate number, need to remove these for summary files
+            key=$(basename -s .sort.tsv $file)
+            key=$(
+                echo $key \
+                    | sed 's/\\.//g' \
+                    | sed 's/__/_/g'
+            )
+
+            cat $file \
+                | awk -v FS="\t" -v OFS="\t" -v key=$key '(NR == 1) {{
+                    $9 = "key";
+                    print
+                }} (NR > 1) {{
+                    $9 = key;
+                    print
+                }}' \
+                    >> majiq.1.tmp
+        done
+
+        # Remove column names from all lines except the first
+        cat majiq.1.tmp \
+            | awk '$1 !~ "^#Gene" || NR == 1' \
+            > majiq.2.tmp
+
+        rm majiq.1.tmp
+
+        # Transfer rMATS summary to sandbox
+        sandbox={params.sandbox}
+        sand_ssh=$(echo $sandbox | cut -d ":" -f 1)
+        sand_dir=$(echo $sandbox | cut -d ":" -f 2)
+
+        scp majiq.2.tmp $sandbox/majiq/majiq_summary.tsv
+        ssh $sand_ssh chmod 644 $sand_dir/majiq/majiq_summary.tsv
+        
+        mv majiq.2.tmp {output}
+        """
+
+
